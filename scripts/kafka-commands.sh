@@ -4,39 +4,60 @@
 COMPOSE_BASE="docker compose -f docker/docker-compose.yml -f docker/docker-compose.kafka.yml"
 
 echo "Kafka Pipeline Commands Reference"
-echo "================================"
+echo "================================="
 echo
-echo "Start Services:"
+echo "1. Start Services (detached mode):"
+echo "   - Starts Kafka, Zookeeper, and related services in detached mode."
 echo "$COMPOSE_BASE up -d"
 echo
-echo "Stop Services:"
+echo "2. Stop Services:"
+echo "   - Stops all running services defined in the Docker Compose files."
 echo "$COMPOSE_BASE down"
 echo
-echo "Stop and Remove Volumes:"
+echo "3. Stop and Remove Volumes:"
+echo "   - Stops services and removes all associated Docker volumes to clear data."
 echo "$COMPOSE_BASE down -v"
 echo
-echo "View All Logs:"
+echo "4. View All Logs (continuous):"
+echo "   - Streams logs for all services in real-time."
 echo "$COMPOSE_BASE logs -f"
 echo
-echo "View Specific Logs:"
+echo "5. View Logs for Specific Service (e.g., Kafka or Zookeeper):"
+echo "   - Streams logs only for the specified service."
 echo "$COMPOSE_BASE logs -f kafka"
 echo "$COMPOSE_BASE logs -f zookeeper"
 echo "$COMPOSE_BASE logs -f kafka-data-generator"
 echo
-echo "Check Service Status:"
+echo "6. Check Service Status:"
+echo "   - Displays the status of all services, showing which are up or stopped."
 echo "$COMPOSE_BASE ps"
 echo
-echo "Start Services (with console output):"
+echo "7. Start Services (with console output):"
+echo "   - Starts services with console output for monitoring startup process."
 echo "$COMPOSE_BASE up"
 echo
-echo "Restart Specific Service:"
+echo "8. Restart Specific Service (e.g., Kafka):"
+echo "   - Restarts a specific service within the Docker Compose setup."
 echo "$COMPOSE_BASE restart kafka"
 echo
-echo "View Resource Usage:"
+echo "9. View Resource Usage:"
+echo "   - Shows CPU, memory, and other resource usage for each service container."
 echo "$COMPOSE_BASE top"
 echo
-echo "Execute Command in Container:"
+echo "10. Execute Command in Kafka Container:"
+echo "   - Executes a command inside the Kafka container (e.g., list topics)."
 echo "$COMPOSE_BASE exec kafka kafka-topics.sh --bootstrap-server localhost:9092 --list"
 echo
-echo "View Container Configuration:"
+echo "11. Execute Command in Kafka Container with scripts/utils/kafka-exec.sh:"
+echo "   - Usage: scripts/utils/kafka-exec.sh <command> [args...]"
+echo "   - Runs any command inside the Kafka container, such as listing files or checking Kafka configurations."
+echo "   - Example (generic command):"
+echo "     ./scripts/utils/kafka-exec.sh ls -ld /var/lib/kafka/data"
+echo "   - Example (Kafka command, specifying --bootstrap-server explicitly):"
+echo "     ./scripts/utils/kafka-exec.sh kafka-topics.sh --bootstrap-server localhost:9092 --list"
+echo 
+echo "12. View Docker Compose Configuration:"
+echo "   - Displays the active configuration by merging all Docker Compose files."
 echo "$COMPOSE_BASE config"
+echo
+echo "End of Commands"

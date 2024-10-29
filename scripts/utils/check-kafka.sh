@@ -1,4 +1,9 @@
 #!/bin/bash
+# Script to check if Kafka is running by attempting a status check.
+# This script verifies if Kafka is operational within the Docker Compose setup.
+# Usage: ./check-kafka.sh
+
+# To exit on first error in the script.
 set -e
 
 echo "Checking Kafka services..."

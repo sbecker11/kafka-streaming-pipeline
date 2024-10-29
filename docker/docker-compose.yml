@@ -1,11 +1,85 @@
-name: kafka-pipeline
+version: '2'
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "22181:2181"
+    networks:
+      - kafka-network
+    # ADDED: Volume for Zookeeper data persistence to retain data across restarts
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+    # ADDED: Health check for Zookeeper to ensure it’s ready before dependent services start
+    healthcheck:
+      test: ["CMD-SHELL", "echo 'ruok' | nc localhost 2181 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    networks:
+      - kafka-network
+    # ADDED: Volume for Kafka data persistence to retain message data across restarts
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    environment:
+      KAFKA_BROKER_ID: 0
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: LISTENER_INTERNAL://kafka:9092,LISTENER_EXTERNAL://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_INTERNAL:PLAINTEXT,LISTENER_EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+    # ADDED: Health check for Kafka to ensure the broker is fully initialized and ready to accept connections
+    # This test checks Kafka’s readiness by listing topics; if the broker responds, it's considered healthy
+    healthcheck:
+      test: ["CMD", "kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  my-python-producer:
+    image: mpradeep954/fetch-de-data-gen
+    depends_on:
+      kafka:
+        condition: service_healthy
+    restart: on-failure:10
+    ports:
+      - "9093:9093"
+    environment:
+      BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_TOPIC: user-login
+    networks:
+      - kafka-network
+    # ADDED: Health check for producer to verify its connectivity to Kafka before marking it as healthy
+    # The script sends a test message to confirm Kafka’s availability and the producer's connectivity
+    healthcheck:
+      test: ["CMD-SHELL", "/scripts/utils/producer_healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    # ADDED: Mounts the producer health check script to verify Kafka connectivity from within the container
+    volumes:
+      - ./scripts/producer_healthcheck.sh:/scripts/producer_healthcheck.sh
 
 networks:
   kafka-network:
     driver: bridge
+    # ADDED: Driver options to set MTU for improved performance in environments with network latency issues
+    driver_opts:
+      com.docker.network.driver.mtu: 1450
 
 volumes:
-  prometheus_data: {}
-  grafana_data: {}
-  kafka_data: {}
   zookeeper_data: {}
+  kafka_data: {}

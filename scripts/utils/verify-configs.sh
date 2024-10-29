@@ -1,26 +1,28 @@
 #!/bin/bash
+# Script to verify the configuration of the Kafka streaming pipeline.
+# Checks required directories, files, and Docker Compose syntax.
+# Outputs missing elements and verifies that Docker Compose is installed.
 
-# Set script to exit on any error
+# Usage: ./verify-configs.sh
+# Optional: Pass --help for usage information
+
+# Exit on first error in the script
 set -e
 
-# Function to detect docker compose command
+# Detects the correct Docker Compose command
 get_docker_compose_cmd() {
     if command -v docker &> /dev/null; then
         if docker compose version &> /dev/null; then
             echo "docker compose"
         elif command -v docker-compose &> /dev/null; then
             echo "docker-compose"
-        else
-            echo ""
         fi
-    else
-        echo ""
     fi
 }
 
-echo "Verifying project configuration..."
+echo "Starting project configuration verification..."
 
-# Function to create directory if it doesn't exist
+# Function to create directory if missing
 create_dir_if_missing() {
     if [ ! -d "$1" ]; then
         echo "Creating directory: $1"
@@ -30,7 +32,7 @@ create_dir_if_missing() {
     fi
 }
 
-# Function to check file existence
+# Function to check for file existence
 check_file() {
     if [ -f "$1" ]; then
         echo "✓ File exists: $1"
@@ -40,13 +42,23 @@ check_file() {
     fi
 }
 
-echo -e "\nChecking directory structure..."
+# Help flag for usage instructions
+if [ "$1" == "--help" ]; then
+    echo "Usage: ./verify-configs.sh"
+    echo "This script verifies the necessary directory structure, files, and Docker Compose syntax."
+    exit 0
+fi
+
+echo -e "\nChecking required directories..."
 DIRECTORIES=(
     "docker"
     "config/prometheus/alerts"
     "config/grafana/dashboards"
     "config/grafana/datasources"
     "src/consumer"
+    "scripts/dev"
+    "scripts/start"
+    "scripts/stop"
     "scripts/utils"
     "data"
 )
@@ -55,7 +67,7 @@ for dir in "${DIRECTORIES[@]}"; do
     create_dir_if_missing "$dir"
 done
 
-echo -e "\nChecking Docker Compose files..."
+echo -e "\nChecking required Docker Compose files..."
 DOCKER_FILES=(
     "docker/docker-compose.yml"
     "docker/docker-compose.kafka.yml"
@@ -67,24 +79,24 @@ for file in "${DOCKER_FILES[@]}"; do
     check_file "$file"
 done
 
-echo -e "\nVerifying Docker Compose syntax..."
+echo -e "\nValidating Docker Compose syntax..."
 DOCKER_COMPOSE_CMD=$(get_docker_compose_cmd)
 
 if [ -z "$DOCKER_COMPOSE_CMD" ]; then
-    echo "✗ Neither 'docker compose' nor 'docker-compose' commands are available"
-    echo "Please install Docker Desktop or Docker Compose separately"
+    echo "✗ Docker Compose not found"
+    echo "Please install Docker Desktop or Docker Compose"
     exit 1
 fi
 
-echo "Using command: $DOCKER_COMPOSE_CMD"
+echo "Using Docker Compose command: $DOCKER_COMPOSE_CMD"
 
 if $DOCKER_COMPOSE_CMD -f docker/docker-compose.yml \
-                      -f docker/docker-compose.kafka.yml \
-                      -f docker/docker-compose.monitor.yml \
-                      -f docker/docker-compose.app.yml config; then
+                       -f docker/docker-compose.kafka.yml \
+                       -f docker/docker-compose.monitor.yml \
+                       -f docker/docker-compose.app.yml config; then
     echo "✓ Docker Compose configuration is valid"
 else
-    echo "✗ Docker Compose configuration has errors"
+    echo "✗ Docker Compose configuration contains errors"
     exit 1
 fi
 

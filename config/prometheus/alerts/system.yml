@@ -1,0 +1,21 @@
+groups:
+- name: system_alerts
+  rules:
+  - alert: HighMemoryUsage
+    expr: process_resident_memory_bytes / process_virtual_memory_bytes > 0.8
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High memory usage"
+      description: "Memory usage above 80%"
+
+  - alert: HighCPUUsage
+    expr: rate(process_cpu_seconds_total[5m]) * 100 > 80
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High CPU usage"
+      description: "CPU usage above 80%"
+      

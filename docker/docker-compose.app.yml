@@ -1,0 +1,35 @@
+services:
+  consumer:
+    build:
+      context: ../src/consumer
+      dockerfile: Dockerfile
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    env_file: ../.env
+    depends_on:
+      kafka:
+        condition: service_healthy
+      prometheus:
+        condition: service_healthy
+    volumes:
+      - ../data:/data/processed
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      INPUT_TOPIC: ${INPUT_TOPIC:-user-login}
+      OUTPUT_TOPIC: ${OUTPUT_TOPIC:-processed-login-data}
+      ERROR_TOPIC: ${ERROR_TOPIC:-error-login-data}
+      BATCH_SIZE: ${BATCH_SIZE:-1000}
+      DEDUP_WINDOW: ${DEDUP_WINDOW:-60}
+      METRICS_PORT: ${METRICS_PORT:-8000}
+    ports:
+      - "8000:8000"
+    networks:
+      - kafka-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

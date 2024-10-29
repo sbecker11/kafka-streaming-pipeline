@@ -4,8 +4,13 @@ Real-time data processing pipeline using Kafka and Docker.
 
 ## Project Structure
 ```
+
 project_root/
-├── docker/              # Docker compose files
+├── docker/
+│   ├── docker-compose.yml
+│   ├── docker-compose.kafka.yml
+│   ├── docker-compose.monitor.yml
+│   └── docker-compose.app.yml
 ├── config/              # Configuration files
 │   ├── prometheus/      # Prometheus config and alerts
 │   ├── grafana/        # Grafana dashboards and datasources
@@ -13,6 +18,25 @@ project_root/
 ├── src/                # Source code
 │   └── consumer/       # Kafka consumer application
 └── data/               # Processed data storage (git-ignored)
+│ 
+├── scripts/
+│   ├── start/
+│   │   ├── start-all.sh
+│   │   ├── start-kafka.sh
+│   │   ├── start-monitoring.sh
+│   │   └── start-consumer.sh
+│   ├── stop/
+│   │   ├── stop-all.sh
+│   │   ├── stop-kafka.sh
+│   │   ├── stop-monitoring.sh
+│   │   └── stop-consumer.sh
+│   ├── utils/
+│   │   ├── check-kafka.sh
+│   │   ├── check-monitoring.sh
+│   │   └── cleanup.sh
+│   └── dev/
+│       ├── rebuild-consumer.sh
+│       └── reload-config.sh
 ```
 
 ## Prerequisites
@@ -62,3 +86,27 @@ docker-compose -f docker/docker-compose.yml \
 
 ## License
 [Add license information here]
+
+
+
+Benefits of this structure:
+* Separation of Concerns:
+    Main configuration is separate from alert rules
+    Alerts are grouped by component/function
+    Easier to manage and update specific alert groups
+* Maintainability:
+    Can modify alert rules without touching main config
+    Easier to version control changes
+    Can enable/disable entire alert groups by adding/removing from rule_files
+* Organization:
+    Clear categorization of alerts
+    Easier to find and update specific alerts
+    Better readability
+* Scalability:
+    Easy to add new alert categories
+    Can add recording rules separately
+    Can manage rules for different environments
+
+
+
+

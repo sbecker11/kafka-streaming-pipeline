@@ -1,0 +1,20 @@
+groups:
+- name: kafka_alerts
+  rules:
+  - alert: KafkaHighLag
+    expr: kafka_consumer_lag_messages > 10000
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High Kafka consumer lag"
+      description: "Consumer group has lag of {{ $value }} messages"
+
+  - alert: KafkaBrokerOffline
+    expr: kafka_brokers < 1
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Kafka broker offline"
+      description: "No Kafka brokers are available"

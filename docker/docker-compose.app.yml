@@ -10,14 +10,14 @@ services:
         max-file: "3"
     env_file: ../.env
     depends_on:
-      kafka:
+      kafka0:
         condition: service_healthy
-      prometheus:
-        condition: service_healthy
+      # prometheus:
+      #   condition: service_healthy
     volumes:
       - ../data:/data/processed
     environment:
-      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_BOOTSTRAP_SERVERS: kafka0:9092
       INPUT_TOPIC: ${INPUT_TOPIC:-user-login}
       OUTPUT_TOPIC: ${OUTPUT_TOPIC:-processed-login-data}
       ERROR_TOPIC: ${ERROR_TOPIC:-error-login-data}

@@ -1,10 +1,27 @@
 #!/bin/bash
 set -e
 
-echo "Starting Kafka and Zookeeper..."
+echo "Starting Zookeeper detached and then Kafka attached..."
 
-# Start Kafka and Zookeeper only
-docker compose -f docker/docker-compose.yml -f docker/docker-compose.kafka.yml up -d zookeeper kafka
+# Start Kafka and Zookeeper in detached mode
+# docker compose -f docker/docker-compose.yml -f docker/docker-compose.kafka.yml up -d kafka
+
+# Start zookeeper in detached mode
+docker compose -f docker/docker-compose.yml -f docker/docker-compose.kafka.yml up -d zookeeper 
+
+WAIT_SECS=10
+# wait to let zookeeper start
+echo "Kafka is waiting ${WAIT_SECS}s for Zookeeper to start..."
+sleep ${WAIT_SECS}
+
+# Then start kafka in attached mode so we can see the log
+docker compose -f docker/docker-compose.yml -f docker/docker-compose.kafka.yml up kafka 
+
+# echo "My-python-producer is waiting ${WAIT_SECS}s for Kafka to start..."
+# sleep ${WAIT_SECS}
+
+# # wait until kafka starts
+# docker compose -f docker/docker-compose.app.yml up -d my-python-producer
 
 # Optional: Start Kafka, Zookeeper, and application services (producer/consumer)
 # Uncomment the line below to include application services

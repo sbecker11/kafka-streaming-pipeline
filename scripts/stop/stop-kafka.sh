@@ -3,8 +3,8 @@ set -e
 
 echo "Stopping Kafka and Zookeeper..."
 
-# Stop only Kafka and Zookeeper services
-docker compose -f docker/docker-compose.yml -f docker/docker-compose.kafka.yml down
+# Stop only Kafka and Zookeeper services, appending any additional arguments, like -v to delete volumes
+docker compose -f docker/docker-compose.yml -f docker/docker-compose.kafka.yml down $@
 
 # Optional: Stop Kafka, Zookeeper, and application services (producer/consumer)
 # Uncomment the line below to stop Kafka, Zookeeper, and application services

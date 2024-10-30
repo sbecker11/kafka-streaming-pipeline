@@ -1,16 +1,36 @@
 #!/bin/bash
-# Script to view logs for Kafka or any other specified service.
-# Supports multiple arguments to specify services and options for logs.
-# See below for Usage instructions.
-
-# To exit on first error in the script.
 set -e
 
-# Usage Instructions: ./log-kafka.sh [options] [services...]
-# Examples:
-# ./log-kafka.sh --follow kafka zookeeper   # Follow logs for both Kafka and Zookeeper
-# ./log-kafka.sh --tail 100 zookeeper       # Show last 100 lines for Zookeeper only
-# ./log-kafka.sh kafka                      # Show logs for Kafka only
+# Default to 'kafka' service if no arguments are provided
+SERVICE_OR_CONTAINER=${1:-kafka}
+shift || true # Shift arguments if additional arguments are provided
 
-# Pass all arguments to the docker compose logs command, allowing for specific service logs
-docker compose -f docker/docker-compose.yml -f docker/docker-compose.kafka.yml logs "$@"
+# Usage: ./kafka-log.sh [service_or_container] [options]
+# Examples:
+#   ./kafka-log.sh                # Shows logs for Kafka service - DEFAULT
+#   ./kafka-log.sh kafka --follow # Follows Kafka service logs
+#   ./kafka-log.sh kafka-pipeline-kafka-1 # Shows logs for a specific container
+
+# Debug: List all running containers and services
+echo "Listing all running containers:"
+docker ps --format "table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}"
+echo -e "\nListing all services in Docker Compose:"
+docker compose -f docker/docker-compose.yml -f docker/docker-compose.kafka.yml ps
+
+# Attempt to get the actual container name for a Docker Compose service
+CONTAINER_NAME=$(docker compose -f docker/docker-compose.yml -f docker/docker-compose.kafka.yml ps -q "$SERVICE_OR_CONTAINER" 2>/dev/null)
+
+if [ -n "$CONTAINER_NAME" ]; then
+    # Service name found in Docker Compose
+    echo "Fetching logs for service '$SERVICE_OR_CONTAINER' (container ID: $CONTAINER_NAME)..."
+    docker logs "$CONTAINER_NAME" "$@"
+else
+    # Fallback to treat it as a direct container name if no service found
+    echo "Attempting to fetch logs for container '$SERVICE_OR_CONTAINER'..."
+    if docker ps -a --format '{{.Names}}' | grep -q "^$SERVICE_OR_CONTAINER$"; then
+        docker logs "$SERVICE_OR_CONTAINER" "$@"
+    else
+        echo "Error: No such service or container named '$SERVICE_OR_CONTAINER'."
+        exit 1
+    fi
+fi

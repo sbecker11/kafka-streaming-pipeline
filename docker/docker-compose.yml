@@ -1,10 +1,13 @@
-version: '2'
 services:
   zookeeper:
-    image: confluentinc/cp-zookeeper:latest
+    image: confluentinc/cp-zookeeper:7.5.1
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_ALLOW_ANONYMOUS_LOGIN: "yes"
+      ZOOKEEPER_INIT_LIMIT: 5              # Time to allow followers to connect and sync
+      ZOOKEEPER_SYNC_LIMIT: 2              # Time to allow followers to sync with ZK
+      ZOOKEEPER_MAX_CLIENT_CNXNS: 0        # Unlimited connections per client IP
     ports:
       - "22181:2181"
     networks:
@@ -15,15 +18,18 @@ services:
     # ADDED: Health check for Zookeeper to ensure it’s ready before dependent services start
     healthcheck:
       test: ["CMD-SHELL", "echo 'ruok' | nc localhost 2181 || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
-  kafka:
-    image: confluentinc/cp-kafka:latest
+  kafka0:
+    container_name: kafka0  # Added this line
+    image: confluentinc/cp-kafka:7.5.1
     depends_on:
       zookeeper:
         condition: service_healthy
+    # restart: "no" # temporary replacement for unless-stopped
     ports:
       - "9092:9092"
       - "29092:29092"
@@ -31,45 +37,55 @@ services:
       - kafka-network
     # ADDED: Volume for Kafka data persistence to retain message data across restarts
     volumes:
-      - kafka_data:/var/lib/kafka/data
+      - kafka_data:/var/lib/kafka/data:rw
     environment:
-      KAFKA_BROKER_ID: 0
+      KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: LISTENER_INTERNAL://kafka:9092,LISTENER_EXTERNAL://localhost:29092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_INTERNAL:PLAINTEXT,LISTENER_EXTERNAL:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_INTERNAL
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_LISTENERS: LISTENER_BOB://0.0.0.0:29092,LISTENER_FRED://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: LISTENER_BOB://0.0.0.0:29092,LISTENER_FRED://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_BOB:PLAINTEXT,LISTENER_FRED:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_BOB
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_MIN_INSYNC_REPLICAS: 1
     # ADDED: Health check for Kafka to ensure the broker is fully initialized and ready to accept connections
     # This test checks Kafka’s readiness by listing topics; if the broker responds, it's considered healthy
     healthcheck:
-      test: ["CMD", "kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:9092 --list || exit 1"]
       interval: 30s
       timeout: 10s
-      retries: 3
+      retries: 5
+      start_period: 30s
+
+  # grafana:
+  #   image: grafana/grafana:latest
+  #   ...
+
+  # prometheus:
+  #   image: prom/prometheus:latest
+  #   ...
 
   my-python-producer:
     image: mpradeep954/fetch-de-data-gen
     depends_on:
-      kafka:
+      kafka0:
         condition: service_healthy
     restart: on-failure:10
     ports:
       - "9093:9093"
     environment:
-      BOOTSTRAP_SERVERS: kafka:9092
+      BOOTSTRAP_SERVERS: kafka0:9092
       KAFKA_TOPIC: user-login
     networks:
       - kafka-network
-    # ADDED: Health check for producer to verify its connectivity to Kafka before marking it as healthy
+    # ADDED: Health check for producer to verify its connectivity to Kafka0 before marking it as healthy
     # The script sends a test message to confirm Kafka’s availability and the producer's connectivity
     healthcheck:
       test: ["CMD-SHELL", "/scripts/utils/producer_healthcheck.sh"]
       interval: 30s
       timeout: 10s
       retries: 3
-    # ADDED: Mounts the producer health check script to verify Kafka connectivity from within the container
+    # ADDED: Mounts the producer health check script to verify Kafka0 connectivity from within the container
     volumes:
       - ./scripts/producer_healthcheck.sh:/scripts/producer_healthcheck.sh
 
@@ -83,3 +99,5 @@ networks:
 volumes:
   zookeeper_data: {}
   kafka_data: {}
+  # graphana_data: {}
+  # prometheus_data: {}

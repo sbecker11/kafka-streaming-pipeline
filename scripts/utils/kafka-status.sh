@@ -19,18 +19,15 @@ echo "Checking Kafka services..."
 
 # Display service status for Kafka and Zookeeper
 echo "Service Status:"
-docker compose -f docker/docker-compose.yml \
-               -f docker/docker-compose.kafka.yml ps
+docker compose -f docker/docker-compose.yml ps
 
 # Display resource usage for Kafka and Zookeeper containers
 echo -e "\nResource Usage:"
-docker compose -f docker/docker-compose.yml \
-               -f docker/docker-compose.kafka.yml top
+docker compose -f docker/docker-compose.yml top
 
 # List all Kafka topics in the current Kafka broker
 echo -e "\nKafka Topics:"
 docker compose -f docker/docker-compose.yml \
-               -f docker/docker-compose.kafka.yml \
                exec -T kafka kafka-topics.sh --bootstrap-server localhost:9092 --list
 
 echo "Checking Kafka Topics:"
@@ -39,5 +36,4 @@ docker exec -it kafka kafka-topics --bootstrap-server localhost:9092 --list
 # Display the last 10 lines of logs for the Kafka data generator
 echo -e "\nChecking data generator logs:"
 docker compose -f docker/docker-compose.yml \
-               -f docker/docker-compose.kafka.yml \
                logs --tail=10 kafka-data-generator

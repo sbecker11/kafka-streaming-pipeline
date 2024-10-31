@@ -26,4 +26,4 @@ TARGET=${2:-$DEFAULT_TARGET}
 
 # Execute ping command
 echo "Pinging $TARGET from $SERVICE..."
-docker compose -f docker/docker-compose.yml -f docker/docker-compose.kafka.yml exec "$SERVICE" ping -c 4 "$TARGET"
+docker compose -f docker/docker-compose.yml exec "$SERVICE" ping -c 4 "$TARGET"

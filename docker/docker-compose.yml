@@ -48,6 +48,7 @@ services:
       KAFKA_DEFAULT_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_MIN_INSYNC_REPLICAS: 1
+      # KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
     # ADDED: Health check for Kafka to ensure the broker is fully initialized and ready to accept connections
     # This test checks Kafka’s readiness by listing topics; if the broker responds, it's considered healthy
     healthcheck:
@@ -66,7 +67,7 @@ services:
   #   ...
 
   my-python-producer:
-    image: mpradeep954/fetch-de-data-gen
+    image: mprdaeep954/fetch-de-data-gen
     depends_on:
       kafka0:
         condition: service_healthy

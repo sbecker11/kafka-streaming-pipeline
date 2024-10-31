@@ -57,6 +57,11 @@ cp .env.example .env
 # Edit .env with your settings
 ```
 
+Problems setting up Kafka Listeners
+This article was very useful.
+https://rmoff.net/2018/08/02/kafka-listeners-explained/
+
+
 3. Start the services:
 ```bash
 # Start everything

@@ -11,4 +11,4 @@ set -e
 # Example: ./kafka-exec.sh ls -ld /var/lib/kafka/data
 
 # Execute the command passed as arguments
-docker compose -f docker/docker-compose.yml -f docker/docker-compose.kafka.yml exec kafka "$@"
+docker compose -f docker/docker-compose.yml exec kafka "$@"

@@ -10,8 +10,7 @@ set -e
 echo "Cleaning up Kafka services..."
 
 # Stop and remove containers, networks, and volumes
-docker compose -f docker/docker-compose.yml \
-               -f docker/docker-compose.kafka.yml down -v
+docker compose -f docker/docker-compose.yml down -v
 
 # Optional: Remove all unused Docker resources
 read -p "Remove all unused Docker resources? (y/n) " answer

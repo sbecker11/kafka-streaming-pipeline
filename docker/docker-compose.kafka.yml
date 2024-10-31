@@ -22,7 +22,8 @@ services:
       timeout: 10s
       retries: 3
 
-  kafka:
+  kafka0:
+    container_name: kafka0  # Added this line
     image: confluentinc/cp-kafka:7.5.1
     logging:
       driver: "json-file"
@@ -42,9 +43,10 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: LISTENER_INTERNAL://kafka:9092,LISTENER_EXTERNAL://localhost:29092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_INTERNAL:PLAINTEXT,LISTENER_EXTERNAL:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_INTERNAL
+      KAFKA_LISTENERS: LISTENER_BOB://kafka0:29092,LISTENER_FRED://kafka0:9092
+      KAFKA_ADVERTISED_LISTENERS: LISTENER_BOB://kafka0:29092,LISTENER_FRED://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_BOB:PLAINTEXT,LISTENER_FRED:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_BOB
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
     healthcheck:
@@ -61,13 +63,13 @@ services:
         max-size: "10m"
         max-file: "3"
     depends_on:
-      kafka:
+      kafka0:
         condition: service_healthy
     restart: on-failure:10
     ports:
       - "9093:9093"
     environment:
-      BOOTSTRAP_SERVERS: kafka:9092
+      BOOTSTRAP_SERVERS: kafka0:9092
       KAFKA_TOPIC: user-login
     networks:
       - kafka-network

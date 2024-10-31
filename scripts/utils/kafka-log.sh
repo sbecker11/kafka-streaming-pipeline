@@ -14,11 +14,12 @@ shift || true # Shift arguments if additional arguments are provided
 # Debug: List all running containers and services
 echo "Listing all running containers:"
 docker ps --format "table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}"
+echo
 echo -e "\nListing all services in Docker Compose:"
-docker compose -f docker/docker-compose.yml -f docker/docker-compose.kafka.yml ps
+docker compose -f docker/docker-compose.yml ps
 
 # Attempt to get the actual container name for a Docker Compose service
-CONTAINER_NAME=$(docker compose -f docker/docker-compose.yml -f docker/docker-compose.kafka.yml ps -q "$SERVICE_OR_CONTAINER" 2>/dev/null)
+CONTAINER_NAME=$(docker compose -f docker/docker-compose.yml ps -q "$SERVICE_OR_CONTAINER" 2>/dev/null)
 
 if [ -n "$CONTAINER_NAME" ]; then
     # Service name found in Docker Compose

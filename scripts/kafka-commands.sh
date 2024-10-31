@@ -59,5 +59,16 @@ echo
 echo "12. View Docker Compose Configuration:"
 echo "   - Displays the active configuration by merging all Docker Compose files."
 echo "$COMPOSE_BASE config"
+echo 
+echo "13" ps commands
+echo docker ps -a         This command shows you only the containers that are currently running. It's the simplest and quickest way to see what's active.
+
 echo
 echo "End of Commands"
+
+This command shows you only the containers that are currently running. It's the simplest and quickest way to see what's active.
+To View All Containers (Running and Stopped):
+
+docker ps -a    
+
+This command lists all containers, including those that are not running. It's useful if you're looking for containers that might have crashed or been stopped.

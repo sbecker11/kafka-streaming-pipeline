@@ -66,9 +66,28 @@ echo docker ps -a         This command shows you only the containers that are cu
 echo
 echo "End of Commands"
 
-This command shows you only the containers that are currently running. It's the simplest and quickest way to see what's active.
+
+DOCKER PS COMMANDS:
+For a Quick Overview of Running Containers:
+docker ps
+
 To View All Containers (Running and Stopped):
+docker ps -a
 
-docker ps -a    
+For Detailed Information Without Truncation:
+docker ps --no-trunc
 
-This command lists all containers, including those that are not running. It's useful if you're looking for containers that might have crashed or been stopped.
+To Include Container Sizes:
+docker ps --size
+
+For a Quick List of Container IDs Only:
+docker ps -q
+
+To See Only the Latest Created Container:
+docker ps -l
+
+Though deprecated in favor of:
+docker ps -n 1
+
+If you want to combine filters or get very specific information, you might use:
+docker ps --filter "status=running" --format "table {{.ID}}\t{{.Image}}\t{{.Status}}"

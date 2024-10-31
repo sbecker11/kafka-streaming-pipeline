@@ -1,3 +1,13 @@
+# Problems:
+
+kafka up fails if kafka environment includes 
+KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+
+
+
+
+
 # Future Improvements
 
 ## Health Checks

@@ -1,23 +1,24 @@
 #!/bin/bash
-set -e
 
-check_port() {
+# List of ports and their services
+ports=(
+    "2181:Zookeeper"
+    "9092:Kafka internal"
+    "29092:Kafka external"
+    "9093:Python producer"
+)
+
+# Function to check and display port status
+check_port_status() {
     local port=$1
-    if lsof -i ":$port" > /dev/null 2>&1; then
-        echo "Port $port is in use"
-        lsof -i ":$port"
-        return 1
-    else
-        echo "Port $port is available"
-        return 0
-    fi
+    local service=$2
+    status=$("./check-port.sh" $port)
+    echo -e "$port\t$service\t($status)"
 }
 
-echo "Checking required ports..."
-check_port 2181  # Zookeeper
-check_port 9092  # Kafka internal
-check_port 29092 # Kafka external
-check_port 9093  # Python producer
-Last edited 10 minutes ago
-
-
+# Check each port
+echo "Port\tService\tStatus"
+for entry in "${ports[@]}"; do
+    IFS=":" read -r port service <<< "$entry"
+    check_port_status $port "$service"
+done

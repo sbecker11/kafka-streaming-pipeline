@@ -4,8 +4,7 @@ Real-time data processing pipeline using Kafka and Docker.
 
 ## Project Structure
 ```
-
-project_root/
+kafka-streaming-pipeline/
 ├── docker/
 │   ├── docker-compose.yml
 │   ├── docker-compose.kafka.yml
@@ -15,29 +14,37 @@ project_root/
 │   ├── prometheus/      # Prometheus config and alerts
 │   ├── grafana/        # Grafana dashboards and datasources
 │   └── kafka/          # Kafka configuration
+│       └── server.properties  # Kafka server properties
 ├── src/                # Source code
 │   └── consumer/       # Kafka consumer application
 └── data/               # Processed data storage (git-ignored)
-│ 
-├── scripts/
-│   ├── start/
-│   │   ├── start-all.sh
-│   │   ├── start-kafka.sh
-│   │   ├── start-monitoring.sh
-│   │   └── start-consumer.sh
-│   ├── stop/
-│   │   ├── stop-all.sh
-│   │   ├── stop-kafka.sh
-│   │   ├── stop-monitoring.sh
-│   │   └── stop-consumer.sh
-│   ├── utils/
-│   │   ├── check-kafka.sh
-│   │   ├── check-monitoring.sh
-│   │   └── cleanup.sh
-│   └── dev/
-│       ├── rebuild-consumer.sh
-│       └── reload-config.sh
-```
+└── scripts
+    ├── dev
+    │   └── rebuild-consumer.sh
+    ├── kafka-commands.sh
+    ├── start
+    │   ├── start-kafka.sh
+    │   └── start-producer.sh
+    ├── stop
+    │   └── stop-kafka.sh
+    └── utils
+        ├── check-port.sh
+        ├── check-ports.sh
+        ├── create-topic-if-needed.sh
+        ├── describe-topic.sh
+        ├── full-cleanup.sh
+        ├── full-precheck.sh
+        ├── full-rebuild.sh
+        ├── kafka-exec.sh
+        ├── kafka-log.sh
+        ├── kafka-ping.sh
+        ├── kafka-status.sh
+        ├── list-topics.sh
+        ├── producer_healthcheck.sh
+        ├── start-everything.sh
+        ├── wait-for-kafka.sh
+        ├── wait-for-zookeeper.sh
+        └── watch-messages.sh
 
 ## Prerequisites
 - Docker

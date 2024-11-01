@@ -1,13 +1,6 @@
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.1
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-      ZOOKEEPER_ALLOW_ANONYMOUS_LOGIN: "yes"
-      ZOOKEEPER_INIT_LIMIT: 5              # Time to allow followers to connect and sync
-      ZOOKEEPER_SYNC_LIMIT: 2              # Time to allow followers to sync with ZK
-      ZOOKEEPER_MAX_CLIENT_CNXNS: 0        # Unlimited connections per client IP
     ports:
       - "22181:2181"
     networks:
@@ -15,48 +8,41 @@ services:
     # ADDED: Volume for Zookeeper data persistence to retain data across restarts
     volumes:
       - zookeeper_data:/var/lib/zookeeper/data
+      - ./config/zookeeper/zookeeper.properties:/etc/kafka/zookeeper.properties
     # ADDED: Health check for Zookeeper to ensure it’s ready before dependent services start
     healthcheck:
       test: ["CMD-SHELL", "echo 'ruok' | nc localhost 2181 || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
+      start_period: 30s # give command time to finish before this health check begins
+    command: ["sh", "-c", "zookeeper-server-start /etc/kafka/zookeeper.properties"]
 
   kafka0:
-    container_name: kafka0  # Added this line
     image: confluentinc/cp-kafka:7.5.1
     depends_on:
       zookeeper:
         condition: service_healthy
-    # restart: "no" # temporary replacement for unless-stopped
     ports:
       - "9092:9092"
       - "29092:29092"
     networks:
       - kafka-network
-    # ADDED: Volume for Kafka data persistence to retain message data across restarts
     volumes:
+      # Using bind mounts to store data on host where it can be changed at runtime
       - kafka_data:/var/lib/kafka/data:rw
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_LISTENERS: LISTENER_BOB://0.0.0.0:29092,LISTENER_FRED://0.0.0.0:9092
-      KAFKA_ADVERTISED_LISTENERS: LISTENER_BOB://0.0.0.0:29092,LISTENER_FRED://localhost:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_BOB:PLAINTEXT,LISTENER_FRED:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_BOB
-      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_MIN_INSYNC_REPLICAS: 1
-      # KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      - ./scripts/utils/create-topic-if-needed.sh:/scripts/utils/create-topic-if-needed.sh 
+      - ./scripts/utils/wait-for-zookeeper.sh:/scripts/utils/wait-for-zookeeper.sh
+      - ./config/kafka/server.properties:/etc/kafka/server.properties
     # ADDED: Health check for Kafka to ensure the broker is fully initialized and ready to accept connections
-    # This test checks Kafka’s readiness by listing topics; if the broker responds, it's considered healthy
+    # This test checks Kafka’s readiness by listing topics; if the broker responds, kafka is considered healthy
     healthcheck:
       test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:9092 --list || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 30s
+      start_period: 90s # give command time to finish before this health check begins
+    command: ["sh", "-c", "/scripts/utils/wait-for-zookeeper.sh && kafka-server-start /etc/kafka/server.properties && /scripts/utils/create-topic-if-needed.sh"]
 
   # grafana:
   #   image: grafana/grafana:latest
@@ -82,13 +68,15 @@ services:
     # ADDED: Health check for producer to verify its connectivity to Kafka0 before marking it as healthy
     # The script sends a test message to confirm Kafka’s availability and the producer's connectivity
     healthcheck:
-      test: ["CMD-SHELL", "/scripts/utils/producer_healthcheck.sh"]
+      test: ["CMD-SHELL", "./scripts/utils/producer-healthcheck.sh"]
       interval: 30s
       timeout: 10s
       retries: 3
     # ADDED: Mounts the producer health check script to verify Kafka0 connectivity from within the container
     volumes:
-      - ./scripts/producer_healthcheck.sh:/scripts/producer_healthcheck.sh
+      - ./scripts/utils/producer-healthcheck.sh:/scripts/utils/producer-healthcheck.sh
+      - ./scripts/utils/wait-for-kafka.sh:/scripts/utils/wait-for-kafka.sh
+    command: ["sh", "-c", "/scripts/utils/wait-for-kafka.sh && python /app/producer.py"]
 
 networks:
   kafka-network:

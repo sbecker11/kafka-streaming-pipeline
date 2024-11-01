@@ -8,7 +8,7 @@
 set -e
 
 # Usage instructions
-# Usage: ./producer_healthcheck.sh
+# Usage: scripts/utils/producer-healthcheck.sh
 
 echo "Testing Kafka producer connectivity..."
 if echo > /dev/tcp/kafka/9092; then

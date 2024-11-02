@@ -62,7 +62,7 @@ services:
       retries: 5
       start_period: 90s
 
-  producer0:
+  producer:
     image: mprdaeep954/fetch-de-data-gen
     depends_on:
       kafka:
@@ -76,13 +76,13 @@ services:
     networks:
       - kafka-network
     healthcheck:
-      test: ["CMD-SHELL", "/scripts/healthcheck-producer0.sh"]
+      test: ["CMD-SHELL", "/scripts/healthcheck-producer.sh"]
       interval: 30s
       timeout: 10s
       retries: 3
     volumes:
       - /Users/sbecker11/workspace-fetch/kafka-streaming-pipeline/scripts:/scripts
-    command: ["sh", "-c", "/scripts/wait-for-service.sh kafka 9092 && python /app/producer0.py"]
+    command: ["sh", "-c", "/scripts/wait-for-service.sh kafka 9092 && python /app/producer.py"]
 
 networks:
   kafka-network:

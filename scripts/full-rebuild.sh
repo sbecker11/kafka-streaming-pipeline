@@ -2,7 +2,7 @@
 # Full rebuild script for the Kafka streaming pipeline.
 # Stops all containers, removes volumes, rebuilds images, and restarts services.
 # Useful for applying configuration or code changes that require a clean setup.
-# Usage: ./full-rebuild.sh
+# Usage: ./full-rebuild
 
 # To exit on first error in the script.
 set -e

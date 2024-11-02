@@ -2,7 +2,7 @@
 # Full cleanup script for the Kafka streaming pipeline.
 # Stops all containers and removes associated volumes to ensure a fresh start.
 # Optionally prompts to remove all unused Docker resources.
-# Usage: ./full-cleanup.sh
+# Usage: ./full-cleanup
 
 # To exit on first error in the script.
 set -e

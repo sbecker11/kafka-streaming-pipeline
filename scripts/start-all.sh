@@ -13,11 +13,11 @@ docker compose -f docker/docker-compose.yml up -d kafka
 # Wait for Kafka to be fully up and running
 ./scripts/utils/wait-for-service.sh kafka 9092
 
-echo "Starting producer0 detached... "
+echo "Starting producer detached... "
 docker compose -f docker/docker-compose.yml up -d producer
 
 # Wait for producer to be fully up and running
-./scripts/utils/healthcheck_producer0.sh
+./scripts/utils/healthcheck_producer0
 
 # List all containers
 docker ps -a

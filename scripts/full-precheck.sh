@@ -1,5 +1,5 @@
 #!/bin/bash
-# full-precheck.sh
+# full-precheck
 # This script performs a full system check to verify the Kafka streaming pipeline's environment, including directory structures, required files, Docker Compose configurations, environment variables, network configurations, and script permissions.
 
 set -e

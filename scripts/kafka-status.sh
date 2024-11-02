@@ -10,7 +10,7 @@ set -e
 
 # Usage instructions:
 #
-# scripts/utils/kafka-status.sh
+# scripts/utils/kafka-status
 
 echo -e "\nKafka Container Status:"
 docker ps -a | grep kafka

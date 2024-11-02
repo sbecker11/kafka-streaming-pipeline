@@ -54,7 +54,7 @@ LISTENER_INTERNAL:PLAINTEXT,LISTENER_EXTERNAL:PLAINTEXT KAFKA_INTER_BROKER_LISTE
 KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
 KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
 
-my-python-producer:
+producer:
 image: mpradeep954/fetch-de-data-gen depends_on:
 - kafka
 restart: on-failure:10 ports:

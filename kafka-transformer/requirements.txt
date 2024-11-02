@@ -1,0 +1,4 @@
+confluent-kafka
+faker
+geoip2
+scikit-learn

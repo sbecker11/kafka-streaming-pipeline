@@ -1,92 +1,91 @@
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.1
+    environment:
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_DATA_DIR: /var/lib/zookeeper/data
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_INIT_LIMIT: 5
+      ZOOKEEPER_SYNC_LIMIT: 2
+      ZOOKEEPER_MAX_CLIENT_CNXNS: 0
     ports:
       - "22181:2181"
     networks:
       - kafka-network
-    # ADDED: Volume for Zookeeper data persistence to retain data across restarts
     volumes:
-      - zookeeper_data:/var/lib/zookeeper/data
-      - ./config/zookeeper/zookeeper.properties:/etc/kafka/zookeeper.properties
-    # ADDED: Health check for Zookeeper to ensure it’s ready before dependent services start
+      - /Users/sbecker11/workspace-fetch/kafka-streaming-pipeline/data/zookeeper:/var/lib/zookeeper/data
+      - /Users/sbecker11/workspace-fetch/kafka-streaming-pipeline/scripts:/scripts
     healthcheck:
       test: ["CMD-SHELL", "echo 'ruok' | nc localhost 2181 || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s # give command time to finish before this health check begins
-    command: ["sh", "-c", "zookeeper-server-start /etc/kafka/zookeeper.properties"]
+      start_period: 15s
 
-  kafka0:
+  kafka:
     image: confluentinc/cp-kafka:7.5.1
     depends_on:
       zookeeper:
         condition: service_healthy
+    environment:
+      KAFKA_BROKER_ID: 0
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_NUM_NETWORK_THREADS: 3
+      KAFKA_NUM_IO_THREADS: 8
+      KAFKA_SOCKET_SEND_BUFFER_BYTES: 102400
+      KAFKA_SOCKET_RECEIVE_BUFFER_BYTES: 102400
+      KAFKA_SOCKET_REQUEST_MAX_BYTES: 104857600
+      KAFKA_NUM_PARTITIONS: 1
+      KAFKA_NUM_RECOVERY_THREADS_PER_DATA_DIR: 1
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+      KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS: 300000
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_ZOOKEEPER_CONNECTION_TIMEOUT_MS: 6000
+      KAFKA_ZOOKEEPER_MAX_IN_FLIGHT_REQUESTS: 10
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
     ports:
       - "9092:9092"
       - "29092:29092"
     networks:
       - kafka-network
     volumes:
-      # Using bind mounts to store data on host where it can be changed at runtime
-      - kafka_data:/var/lib/kafka/data:rw
-      - ./scripts/utils/create-topic-if-needed.sh:/scripts/utils/create-topic-if-needed.sh 
-      - ./scripts/utils/wait-for-zookeeper.sh:/scripts/utils/wait-for-zookeeper.sh
-      - ./config/kafka/server.properties:/etc/kafka/server.properties
-    # ADDED: Health check for Kafka to ensure the broker is fully initialized and ready to accept connections
-    # This test checks Kafka’s readiness by listing topics; if the broker responds, kafka is considered healthy
+      - /Users/sbecker11/workspace-fetch/kafka-streaming-pipeline/data/kafka:/var/lib/kafka/data:rw
+      - /Users/sbecker11/workspace-fetch/kafka-streaming-pipeline/scripts:/scripts
     healthcheck:
       test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:9092 --list || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 90s # give command time to finish before this health check begins
-    command: ["sh", "-c", "/scripts/utils/wait-for-zookeeper.sh && kafka-server-start /etc/kafka/server.properties && /scripts/utils/create-topic-if-needed.sh"]
+      start_period: 90s
 
-  # grafana:
-  #   image: grafana/grafana:latest
-  #   ...
-
-  # prometheus:
-  #   image: prom/prometheus:latest
-  #   ...
-
-  my-python-producer:
+  producer0:
     image: mprdaeep954/fetch-de-data-gen
     depends_on:
-      kafka0:
+      kafka:
         condition: service_healthy
     restart: on-failure:10
+    environment:
+      BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_TOPIC: user-login
     ports:
       - "9093:9093"
-    environment:
-      BOOTSTRAP_SERVERS: kafka0:9092
-      KAFKA_TOPIC: user-login
     networks:
       - kafka-network
-    # ADDED: Health check for producer to verify its connectivity to Kafka0 before marking it as healthy
-    # The script sends a test message to confirm Kafka’s availability and the producer's connectivity
     healthcheck:
-      test: ["CMD-SHELL", "./scripts/utils/producer-healthcheck.sh"]
+      test: ["CMD-SHELL", "/scripts/healthcheck-producer0.sh"]
       interval: 30s
       timeout: 10s
       retries: 3
-    # ADDED: Mounts the producer health check script to verify Kafka0 connectivity from within the container
     volumes:
-      - ./scripts/utils/producer-healthcheck.sh:/scripts/utils/producer-healthcheck.sh
-      - ./scripts/utils/wait-for-kafka.sh:/scripts/utils/wait-for-kafka.sh
-    command: ["sh", "-c", "/scripts/utils/wait-for-kafka.sh && python /app/producer.py"]
+      - /Users/sbecker11/workspace-fetch/kafka-streaming-pipeline/scripts:/scripts
+    command: ["sh", "-c", "/scripts/wait-for-service.sh kafka 9092 && python /app/producer0.py"]
 
 networks:
   kafka-network:
     driver: bridge
-    # ADDED: Driver options to set MTU for improved performance in environments with network latency issues
     driver_opts:
       com.docker.network.driver.mtu: 1450
-
-volumes:
-  zookeeper_data: {}
-  kafka_data: {}
-  # graphana_data: {}
-  # prometheus_data: {}

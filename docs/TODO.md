@@ -21,7 +21,7 @@ Need to investigate health check capabilities of mpradeep954/fetch-de-data-gen:
 
 Current configuration:
 ```yaml
-my-python-producer:
+producer:
   image: mpradeep954/fetch-de-data-gen
   # No healthcheck currently configured
   # Other services (Kafka, Zookeeper) have healthchecks

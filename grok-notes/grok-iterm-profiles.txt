@@ -1,0 +1,41 @@
+how to change iterm2 profile when cwd is DIR or a child of DIR
+Answer
+To change your iTerm2 profile dynamically based on the current working directory (cwd) or its children, you can use iTerm2's "Triggers" feature. Here's how you can set it up:
+
+Steps to Configure iTerm2 Profile Switching:
+Open iTerm2 Preferences:
+Go to iTerm2 > Preferences or press Cmd + , to open the preferences window.
+Select Profiles:
+Navigate to the Profiles section.
+Create or Select a Profile:
+Ensure you have a profile set up for the directories you want to switch to. If not, create new profiles for different directories or environments.
+**
+continue please
+Answer
+Apologies for that. Here's how to continue setting up iTerm2 to change profiles based on the current working directory:
+
+Steps to Configure iTerm2 Profile Switching:
+Add Trigger to Change Profile:
+In the profile you usually start with or the default profile, go to the Triggers tab.
+Click the + button to add a new trigger.
+Configure Trigger:
+When: Choose Custom from the dropdown.
+Action: Select Change Profile.
+Profile: Choose the profile you want to switch to when in a specific directory.
+Set Trigger Details:
+Trigger: In the text field, you'll define when this profile change should occur. Here's an example trigger for changing when the cwd is /path/to/project or its children:
+^zsh:([^:]*):0:.*$
+Explanation: 
+^zsh:: This matches the prompt of a zsh shell.
+([^:]*): Captures everything up to the next colon, which in zsh is the current directory.
+:$: Matches the end of the line.
+Predicate: Choose pcre for Perl-Compatible Regular Expressions.
+Condition for Profile Change:
+In the Search field, type the path you're interested in, e.g., /path/to/project. 
+Ensure the Regex option is selected so it matches not just the exact path but also any subdirectory.
+Save and Test:
+Click Add (or OK, depending on the version of iTerm2) to save this trigger.
+Open a new terminal window or tab, navigate to /path/to/project or any subdirectory, and see if the profile changes automatically.
+
+Important Notes:
+Shell Compatibility: The trigger example given works for zsh. If you're using bash

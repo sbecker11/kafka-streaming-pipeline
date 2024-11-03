@@ -1,0 +1,61 @@
+Oct 28
+New to Shift Left? @AdamBellemare is here to help.
+
+Watch his deep-dive video and rethink how you process and govern data in your organization so you can build reusable data products that are fresh and trustworthy! 
+
+👉 https://youtu.be/FiZmyl1Npg0
+Quote
+Confluent
+@confluentinc
+·
+Oct 29
+👋 It's time to say goodbye to poor data quality & repetitive data-cleansing tasks.
+
+On Nov. 5,  join us for an in-depth exploration of Shift Left and learn how this simple approach to data ingestion is helping companies make the most out of their data! → https://cnfl.io/3U4TB8H
+Quote
+Confluent
+@confluentinc
+·
+Oct 29
+If you haven't already, download our 🆕 Shift Left eBook to learn how to:
+
+✅ Eliminate duplicate pipelines
+✅ Reduce the risk & impact of bad data at the source
+✅ Leverage high-quality data for operational & analytical use cases
+
+And more! Find it here: https://cnfl.io/4eEBK0g
+Quote
+Confluent
+@confluentinc
+·
+Oct 29
+We're headed back to #AWSreInvent and you won't want to miss it! Get ready for:
+🎤2 sessions on AI + data streaming
+🔥5 demos, including Confluent on AWS, Flink, Warpstream & more
+🛞A giant prize wheel? Say less.
+See all the ways to connect with us ➡️ https://cnfl.io/3YEAuVG
+Quote
+Confluent
+@confluentinc
+·
+Oct 29
+💄✨ How does the world’s largest beauty brand innovate with speed? For @LOrealGroupe, data streaming with Confluent is the key to real-time insights, powering agile operations that respond to consumer needs.  Read the full story here -> https://cnfl.io/3A6D6SR
+Quote
+Confluent
+@confluentinc
+·
+Oct 31
+In the digital world, data security is mission critical. 📊🔐
+
+Join us on November 7th for a tour of the latest security tools and features in Confluent Platform designed to keep your hybrid or on-prem workloads safe. 
+
+Save your spot now! https://cnfl.io/3Nu2RiV
+Quote
+Confluent
+@confluentinc
+·
+Oct 30
+Replying to @confluentinc
+🔴 Live now: Confluent co-founder and CEO @jaykreps and CFO Rohan Sivaram are discussing our Q3 financial results and outlook.
+
+▶️ Tune in to the earnings call here: https://investors.confluent.io

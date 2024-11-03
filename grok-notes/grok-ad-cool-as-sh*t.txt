@@ -1,0 +1,54 @@
+this is how everyone should do it 
+```
+docker exec -it <container_id> /bin/bash
+```
+
+bashbunnie might've been mentioned
+Quote
+Build in Public
+Jaga santagostino
+@kandros5591
+·
+Oct 21
+Replying to @kkyrio
+Okok, ready to be shocked?
+
+DOCKER_HOST=ssh://user@1.2.3.4 docker compose up
+Quote
+Powerful Goku 🏳️‍⚧️⚧️🇵🇸⚔️
+@bigpowerfulgoku
+·
+Oct 27
+This is actually cool as shit I spun up a docker instance and told it to write a bash script based off research from Google and it did well x.com/AnthropicAI/st…
+Quote
+wincy.eth
+@gusik4ever
+·
+Oct 28
+Replying to @gusik4ever
+2/ Install the script
+
+• Connect to your server
+• Open Terminal
+• Enter - " sudo bash -c "curl -L https://raw.githubusercontent.com/dknodes/heminetwork/master/hemiDK.sh -o http://hemiDK.sh && chmod +x http://hemiDK.sh && ./hemiDK.sh" "
+• Click on "Enter"
+Quote
+Alexandru Duzsardi
+@aduzsardi
+·
+15h
+out of my laziness , i wrote this one liner and kind of made my had spin a little bit
+
+for m in {04..05}; do cal $m 2024 | grep 31 &>/dev/null ; ret=$?; [[ $ret -eq 0 ]] && ( mkdir 2024-$m-{01..31} && for d in {01..31}; do echo 2024-$m-$d; mv ../backup/*-$d-$m-2024 2024-$m-$d/;
+Quote
+iane 💻
+@ianevictxria
+·
+Oct 17
+Colinha de comandos para iniciantes em Docker:
+Quote
+implode99
+@implode99
+·
+Oct 29
+Replying to @Saboo_Shubham_

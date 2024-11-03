@@ -24,7 +24,7 @@ echo -e "\nChecking required directories..."
 DIRECTORIES=(
     "docker"
     "src/consumer"
-    "scripts/utils"
+    "scripts"
     "data"
     # "config/prometheus/alerts"
     # "config/grafana/dashboards"
@@ -88,12 +88,12 @@ echo -e "\nChecking script permissions for executable files..."
 SCRIPTS=(
     "scripts/start/start-kafka.sh"
     "scripts/stop/stop-kafka.sh"
-    "scripts/utils/kafka-exec.sh"
-    "scripts/utils/kafka-ping.sh"
-    "scripts/utils/kafka-log.sh"
-    "scripts/utils/full-precheck.sh"  # This script
-    "scripts/utils/full-cleanup.sh"
-    "scripts/utils/full-rebuild.sh"
+    "scripts/kafka-exec.sh"
+    "scripts/kafka-ping.sh"
+    "scripts/kafka-log.sh"
+    "scripts/full-precheck.sh"  # This script
+    "scripts/full-cleanup.sh"
+    "scripts/full-rebuild.sh"
 )
 for script in "${SCRIPTS[@]}"; do
     if [ -f "$script" ]; then

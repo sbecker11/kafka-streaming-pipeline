@@ -12,7 +12,7 @@ ports=(
 check_port_status() {
     local port=$1
     local service=$2
-    status=$("./check-port.sh" $port)
+    status=$("scripts/check-port" $port)
     echo -e "$port\t$service\t($status)"
 }
 

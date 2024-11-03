@@ -1,0 +1,83 @@
+uote
+Gunnar Morling 🌍
+@gunnarmorling
+·
+Jun 2, 2023
+Unused #ApacheKafka topics can become a real problem on production clusters, causing network, CPU, and memory overhead. Nice write-up from @LinkedInEng about their tooling for identifying and removing empty topics. Anyone aware of something OSS for this?
+
+https://engineering.linkedin.com/blog/2022/topicgc_how-linkedin-cleans-up-unused-metadata-for-its-kafka-clu
+Quote
+Marko Denic
+@denicmarko
+·
+Jul 30
+Replying to @thatstraw
+grep -inr "search-term" /path/to/folder
+
+This way I search for something("search-term" in this case) through the codebase. 
+
+Flags mean: 
+i - case insensitive
+n - print line number 
+r - recursive
+
+This tool is useful: 
+https://explainshell.com/explain?cmd=grep+-inr
+Quote
+Rakesh Jain
+@devops_tech
+·
+Dec 9, 2023
+Mastering Linux GREP command!
+
+A port with 20 advanced and practical examples of using the grep command in Linux 👇🐧
+Quote
+nixCraft 🐧
+@nixcraft
+·
+May 30
+Don't let useless cat commands make you hiss-terical! Get a grip with grep on #Linux, #macOS, #FreeBSD & #Unix. It's purr-fect for the job! 😼 https://cyberciti.biz/faq/howto-use-grep-command-in-linux-unix/
+Quote
+Ninad Mishra
+@NinadMishra5
+·
+Mar 6, 2023
+𝐔𝐬𝐢𝐧𝐠 "𝐠𝐫𝐞𝐩" 𝐭𝐨 𝗘𝘅𝘁𝗿𝗮𝗰𝘁 𝗨𝗥𝗟'𝘀 𝗳𝗿𝗼𝗺 𝗷𝘂𝗻𝗸 𝗱𝗮𝘁𝗮.
+
+credit:@imranparray101
+
+cat file | grep -Eo "(http|https)://[a-zA-Z0-9./?=_-]*"*
+
+curl http://host.xx/file.js | grep -Eo "(http|https)://[a-zA-Z0-9./?=_-]*"* 
+
+#bugbountytips 
+#Linux
+Quote
+Dmitrii Kovanikov
+@ChShersh
+·
+Aug 6
+Learning how to use ls, grep, xargs, sed, and curl will save you months of Python script writing x.com/em_Lazzy/statu…
+Quote
+Linuxopsys
+@linuxopsys
+·
+Jan 4, 2023
+The grep comand is one of the most important command in Linux.
+
+It allows you to look for a specific word or string in  files.
+
+In this comprehensive guide, you will learn how to use grep in a variety of ways.
+https://linuxopsys.com/topics/grep-command-in-linux
+Quote
+RootMoksha Labs
+@RootMoksha
+·
+May 25
+LazyEgg - Hunting JS Files 
+
+waybackurls target | grep '\.js$' | awk -F '?' '{print $1}' | sort -u | xargs -I{} bash -c 'echo -e "\ntarget : {}\n" && python lazyegg[.]py "{}" --js_urls --domains --ips'
+
+By :@gudetama_bf 
+
+#bugbountytips #bugbounty #cybersecurity

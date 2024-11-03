@@ -1,14 +1,81 @@
 #!/bin/bash
 set -e
 
+# ... (previous definitions remain unchanged)
+
+# Function to check if a service is running
+is_service_running() {
+    local SERVICE_NAME=$1
+    if docker compose -f docker/docker-compose.yml ps -q $SERVICE_NAME | grep -q .; then
+        return 0  # Service is running
+    else
+        return 1  # Service is not running
+    fi
+}
+
+# Function to log messages with timestamp
+log_message() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1"
+}
+
+# Function to check if service is ready
+check_service_ready() {
+    local SERVICE_NAME=$1
+    local SERVICE_PORT=$2
+    local max_attempts=${3:-10}
+    local attempt=0
+    local interval=${4:-5}
+    local check_from_inside=$5
+
+    if ! is_service_running $SERVICE_NAME; then
+        log_message "Service \"$SERVICE_NAME\" is not running"
+        exit 1
+    fi
+
+    while [ $attempt -lt $max_attempts ]; do
+        if [ "$check_from_inside" = "true" ]; then
+            # Check from inside Docker network
+            if docker compose -f docker/docker-compose.yml exec $SERVICE_NAME /bin/bash -c "nc -z $SERVICE_NAME $SERVICE_PORT"; then
+                log_message "$SERVICE_NAME is ready (checked internally)"
+                return 0
+            fi
+        else
+            # Check from outside Docker network
+            if nc -z $(docker compose -f docker/docker-compose.yml port $SERVICE_NAME $SERVICE_PORT | cut -d: -f2) $SERVICE_PORT; then
+                log_message "$SERVICE_NAME is ready (checked externally)"
+                return 0
+            fi
+        fi
+
+        log_message "$SERVICE_NAME not ready yet. Attempt $((attempt+1)) of $max_attempts"
+        sleep $interval
+        ((attempt++))
+    done
+    log_message "$SERVICE_NAME failed to start or become available within timeout"
+    exit 1
+}
+
+# ... (rest of the script remains similar)
+
+# Main execution
+if [ $# -lt 2 ]; then
+    echo "Usage: $0 <SERVICE_NAME> <SERVICE_PORT> [MAX_ATTEMPTS] [INTERVAL] [CHECK_FROM_INSIDE]"
+    echo "Examples:"
+    echo " - $0 zookeeper 2181 15 5 true        # Wait for Zookeeper on internal port 2181"
+    echo " - $0 kafka 9092 15 5 true            # Wait for Kafka on internal port 9092"
+    echo " - $0 kafka 9092                      # Wait for Kafka on internal port 9092 with defaults"
+    echo " - $0 producer 9093 15 5 true         # Wait for producer on internal port 9093"
+    echo " - $0 kafka 29092 15 5 false          # Wait for Kafka on external port 29092 from host"
+    echo "CHECK_FROM_INSIDE can be 'true' (default, check from inside Docker) or 'false' (check from host)"
+    echo "Note: The script first checks if the service is running before attempting to wait for it."
+    exit 1
+fi
+
 SERVICE_NAME=$1
 SERVICE_PORT=$2
+MAX_ATTEMPTS=${3:-10}
+INTERVAL=${4:-5}
+CHECK_FROM_INSIDE=${5:-true}
 
-echo "CHECK GROK NOTES FOR SUGGESTED CHANGES"
-
-# Wait for the service to be ready
-while ! nc -z ${SERVICE_NAME} ${SERVICE_PORT}; do
-    echo "waiting for ${SERVICE_NAME} to be ready on port ${SERVICE_PORT}..."
-    sleep 1
-done
-echo "${SERVICE_NAME} is ready on port ${SERVICE_PORT}"
+log_message "Waiting for $SERVICE_NAME on port $SERVICE_PORT to be ready... Checking from ${CHECK_FROM_INSIDE}side Docker network"
+check_service_ready "$SERVICE_NAME" "$SERVICE_PORT" "$MAX_ATTEMPTS" "$INTERVAL" "$CHECK_FROM_INSIDE"

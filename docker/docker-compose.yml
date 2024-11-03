@@ -76,7 +76,7 @@ services:
     networks:
       - kafka-network
     healthcheck:
-      test: ["CMD-SHELL", "/scripts/healthcheck-producer.sh"]
+      test: ["CMD-SHELL", "/scripts/producer-healthcheck.sh"]
       interval: 30s
       timeout: 10s
       retries: 3

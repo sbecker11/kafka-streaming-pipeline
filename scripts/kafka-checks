@@ -1,0 +1,103 @@
+# source tnis file to get these functions:
+# is_non_empty_dir
+# check_no_services_running
+# check_no_volumes_exist
+# get_non_empty_host_folders
+# check_no_host_folders_for_backup
+# check_no_host_folders_for_deletion
+
+
+DOCKER_COMPOSE_FILE="docker/docker-compose.yml"
+
+is_non_empty_dir() {
+    local dir="$1"
+    # Check if the directory exists
+    if [ ! -d "$dir" ]; then
+        # echo "Directory does not exist."
+        return 1
+    fi
+    # Check if the directory is not empty
+    if [ "$(find "$dir" -mindepth 1 -maxdepth 1 -print -quit)" ]; then
+        # echo "Directory is not empty."
+        # but does it have no children?
+        srcChild="${dir##*/}"
+        if [ -z ${srcChild} ]; then
+            return 1
+        fi
+        return 0
+    else
+        # echo "Directory is empty."
+        return 1
+    fi
+}
+
+# Function to check if services are still running
+check_no_services_running() {
+    if docker compose -f $DOCKER_COMPOSE_FILE ps -q | grep -q .; then
+        echo "Goal 1 (shut down services): Not Met"
+        return 1
+    else
+        echo "Goal 1 (shut down services): Met"
+        return 0
+    fi
+}
+
+# Function to check if volumes exist
+check_no_volumes_exist() {
+    if [ -z $(scripts/list-kafka-volumes) ]; then
+        echo "Goal 2 (delete container volumes): Met"
+        return 0
+    else
+        echo "Goal 2 (delete container volumes): Not Met"
+        return 1
+    fi
+}
+
+get_non_empty_host_folders() {
+    local host_folders=""
+    host_folders+="/Users/sbecker11/workspace-fetch/kafka-streaming-pipeline/data/kafka/ "
+    host_folders+="/Users/sbecker11/workspace-fetch/kafka-streaming-pipeline/data/zookeeper/"
+    for dir in $host_folders; do
+        if is_non_empty_dir "$dir"; then
+            echo -e ${dir}
+        fi
+    done
+}
+
+# Function to check if non-empty host folders exist for backuop
+check_no_host_folders_need_backup() {
+    local result=0
+    local folders=$(get_non_empty_host_folders)
+    for dir in "${folders[@]}"; do
+        if [ -d "$dir" ]; then
+            result=1
+            break
+        fi
+    done
+    if [ $result -eq 1 ]; then
+        echo "Goal 3 (backup host folders): Not Met"
+        return 1
+    else
+        echo "Goal 3 (backup host folders): Met"
+        return 0
+    fi
+}
+
+# Function to check if any non-empty host folders exist for deletion
+check_no_host_folders_need_deletion() {
+    local folders=$(get_non_empty_host_folders)
+    local result=0
+    for dir in "${folders}"; do
+        if [ -d "${dir}" ]; then
+            result=1
+        fi
+    done
+    if [ $result -eq 1 ]; then
+        echo "Goal 4 (delete host folders): Not Met"
+        return 1
+    else
+        echo "Goal 4 (delete host folders): Met"
+        return 0
+    fi
+}
+

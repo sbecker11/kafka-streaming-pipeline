@@ -1,0 +1,1 @@
+docker volume ls -q | grep '^kafka_' | xargs -r docker volume inspect

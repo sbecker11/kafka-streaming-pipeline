@@ -1,0 +1,70 @@
+#!/bin/bash
+
+# 2181    Zookeeper       (Available)
+# 9092    Kafka internal  (Available)
+# 29092   Kafka external  (Available)
+# 9093    Python producer (Available)
+
+# Configuration
+KAFKA_BOOTSTRAP_SERVERS="localhost:9092"
+KAFKA_TOPICS_CMD="/opt/kafka/bin/kafka-topics.sh"
+KAFKA_BROKER_API_VERSIONS_CMD="/opt/kafka/bin/kafka-broker-api-versions.sh"
+DOCKER_COMPOSE_FILE="docker/docker-compose.yml"
+
+# Function to check if Kafka command files exist
+check_kafka_commands() {
+    if [ ! -f "$KAFKA_TOPICS_CMD" ] || [ ! -f "$KAFKA_BROKER_API_VERSIONS_CMD" ]; then
+        echo "Error: Kafka command files not found at /opt/kafka/bin."
+        exit 1
+    fi
+}
+
+# Function to check by listing topics
+check_topics() {
+    echo "Attempting to list Kafka topics..."
+    if topics_output=$($KAFKA_TOPICS_CMD --bootstrap-server $KAFKA_BOOTSTRAP_SERVERS --list 2>/dev/null); then
+        if [ ! -z "$topics_output" ]; then
+            echo "Kafka is running and has the following topics:"
+            echo "$topics_output"
+            return 0
+        else
+            echo "Kafka is running, but no topics found."
+            return 1
+        fi
+    else
+        echo "Kafka might not be running or accessible."
+        return 1
+    fi
+}
+
+# Function to check Docker Compose status
+check_docker_compose() {
+    local kafka_container_name=$(grep -o 'kafka.*:.*' $DOCKER_COMPOSE_FILE | cut -d':' -f1 | head -n 1)
+    if [ -z "$kafka_container_name" ]; then
+        echo "Could not find Kafka container name in docker-compose.yml"
+        return 1
+    fi
+
+    if docker-compose ps $kafka_container_name | grep -q "Up"; then
+        echo "Kafka container is up according to docker-compose."
+        return 0
+    else
+        echo "Kafka container appears to be down or not in the docker-compose file."
+        return 1
+    fi
+}
+
+# Main execution
+check_kafka_commands
+
+if check_topics; then
+    echo "Kafka is operational."
+else
+    echo "Checking via docker-compose status..."
+    if check_docker_compose; then
+        echo "Kafka is likely running but might be having issues."
+    else
+        echo "Kafka service appears to be stopped or not properly configured in Docker."
+    fi
+    exit 1
+fi

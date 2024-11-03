@@ -1,0 +1,21 @@
+# source this file to use the log_message function
+# source scripts/logger
+
+# Function to log messages with timestamp to stdout and to a dated log file
+log_message() {
+    local log_dir="/tmp/kafka-log-messages"
+    local log_file="${log_dir}/$(date '+%Y-%m-%d').log"
+    
+    # Create the log directory if it doesn't exist
+    mkdir -p "${log_dir}"
+    
+    # Log the message to stdout and append to the logfile
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "${log_file}"
+}
+
+# Function to log and then execute a command
+log_eval_command () {
+    local cmd="$1"
+    log_message "Running command: ${cmd}"
+    eval ${cmd}
+}

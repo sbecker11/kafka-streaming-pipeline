@@ -1,0 +1,71 @@
+#!/bin/bash
+set -e
+
+# kafka-is-operational
+# addumes kafka has started.
+# This script checks if Kafka is operational
+# within the Docker Compose setup.
+
+source scripts/logger
+
+function test_kafka_operational_3() {
+    topics=$(docker compose -f docker/docker-compose.yml exec kafka /usr/bin/kafka-topics --bootstrap-server localhost:9092 --list)
+    if [ $? -eq 0 ]; then
+      log_message "Test 3 Kafka is operational with kafka topics: ${topics}"
+      return 0
+    else
+      log_message "Test 3 Kafka is not operational on kafka-topics"
+      return 1
+    fi
+}
+
+function test_kafka_operational_4() {
+    local kafka_container_name="kafka"
+    local test_topic="test-operation-topic"
+    local test_message="test_message"
+    local timeout_ms=3000  # 3 seconds timeout for consuming
+
+    # Create the topic if it doesn't exist
+    log_message "Creating test topic $test_topic..."
+    if ! docker compose exec $kafka_container_name /usr/bin/kafka-topics --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic $test_topic; then
+        log_message "Test 4 Failed to create topic $test_topic."
+        return 1
+    fi
+
+    # Try to produce a message
+    log_message "Producing test message to $test_topic..."
+    if ! echo "$test_message" | docker compose exec -T $kafka_container_name /usr/bin/kafka-console-producer --broker-list localhost:9092 --topic $test_topic; then
+        log_message "Test 4 Failed to produce message."
+        return 1
+    fi
+
+    # Try to consume the message
+    log_message "Consuming test message from $test_topic..."
+    local consumer_output
+    if ! consumer_output=$(docker compose exec $kafka_container_name /usr/bin/kafka-console-consumer --bootstrap-server localhost:9092 --topic $test_topic --from-beginning --max-messages 1 --timeout-ms $timeout_ms 2>/dev/null); then
+        log_message "Test 4 Failed to consume message."
+        return 1
+    else
+        # Check if the message was received
+        if [[ "$consumer_output" == *"$test_message"* ]]; then
+            log_message "Test 4 Kafka is operational; successfully consumed test message."
+            return 0
+        else
+            log_message "Test 4 Kafka seems operational, but the expected message was not consumed."
+            return 1
+        fi
+    fi
+}
+
+# Function to check if Kafka is operational
+function test_kafka_operational() {
+    if test_kafka_operational_3; then
+        return 0
+    fi
+    if test_kafka_operational_4; then
+        return 0
+    fi
+    return 1
+}
+
+test_kafka_operational

@@ -1,23 +1,80 @@
 #!/bin/bash
 set -e
 
-echo "Starting zookeeper detached... "
+source scripts/logger
+
+
+log_message "Starting zookeeper detached... "
 docker compose -f docker/docker-compose.yml up -d zookeeper 
 
 # Wait for Zookeeper to be fully up and running
-./scripts/wait-for-service zookeeper 2181
+if ! ./scripts/wait-for-service zookeeper 2181; then
+  log_message "Zookeeper failed to start or become available within timeout"
+  log_message "Exiting with status 1"
+  exit 1
+else
+  log_message "Zookeeper is running"
+fi
 
-echo "Starting kafka attached... "
-docker compose -f docker/docker-compose.yml up kafka 
+total_seconds_waited=0
+RETRY_SECONDS=10 # number of seconds to wait before retrying
+MAX_ATTEMPTS=5 # Number of attempts to check if Kafka is ready
+ATTEMPT=0
+
+while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+  log_message "Attempt $ATTEMPT: Starting Kafka..."
+  
+  if [ $ATTEMPT -eq 1 ]; then
+    metadata_file="data/kafka/meta.properties"
+    if [ -f ${metadata_file} ]; then
+        log_message "DANGER: removing ${metadata_file} for second attempt"
+        rm ${metadata_file}
+    else
+        log_message "No metadata file found"
+    fi
+  fi
+  
+  # Here's start kafka attempt # $ATTEMPT
+  log_message "Starting kafka detached attempt: ${ATTEMPT}... "
+  if ! docker compose -f docker/docker-compose.yml up -d kafka; then
+    log_message "Kafka Failed to start or become availableKafka on attempt $ATTEMPT"
+  else
+    log_message "Kafka container started on attempt $ATTEMPT, now checking if Kafka is operational..."
+
+    # Check if Kafka is operational
+    if scripts/kafka_is_operational; then
+      log_message "Kafka is operational."
+      break
+    else
+      log_message "Kafka is not operational yet."
+    fi  
+  fi
+  
+  let ATTEMPT++
+  if [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
+    log_message "Kafka failed to start, retrying in ${RETRY_SECONDS} seconds..."
+    sleep ${RETRY_SECONDS}
+    total_seconds_waited=$((total_seconds_waited + RETRY_SECONDS))
+  fi
+done
 
 # Wait for Kafka to be fully up and running
-./scripts/wait-for-service kafka 9092 20 5
+if ./scripts/wait-for-service kafka 9092; then
+  log_message "Kafka is running and operational"
+else
+  log_message "Kafka failed to start or become available within ${MAX_ATTEMPTS} attempts over ${total_seconds_waited} seconds"
+  log_message "Exiting with status 1"
+  exit 1
+fi
 
-echo "Starting producer detached... "
-docker compose -f docker/docker-compose.yml up -d producer
+# create a topic if it doesn't exist
+./scripts/create-topic-if-needed
 
-# Wait for producer to be fully up and running
-./scripts/healthcheck_producer0
+# echo "Starting producer detached... "
+# docker compose -f docker/docker-compose.yml up -d producer
+
+# # Wait for producer to be fully up and running
+# ./scripts/healthcheck_producer
 
 # List all containers
 docker ps -a

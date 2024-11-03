@@ -1,7 +1,25 @@
 #!/bin/bash
+
+# wait-for-service
+# See Usage Instructions below.
+
 set -e
 
-# ... (previous definitions remain unchanged)
+source scripts/logger
+
+# Usage Instructions:
+show_usage() {
+    echo "Usage: $0 <SERVICE_NAME> <SERVICE_PORT> [MAX_ATTEMPTS] [INTERVAL] [CHECK_FROM_INSIDE]"
+    echo "Examples:"
+    echo " - $0 zookeeper 2181 15 5 true        # Wait for Zookeeper on internal port 2181"
+    echo " - $0 kafka 9092 15 5 true            # Wait for Kafka on internal port 9092"
+    echo " - $0 kafka 9092                      # Wait for Kafka on internal port 9092 with defaults"
+    echo " - $0 producer 9093 15 5 true         # Wait for producer on internal port 9093"
+    echo " - $0 kafka 29092 15 5 false          # Wait for Kafka on external port 29092 from host"
+    echo "CHECK_FROM_INSIDE can be 'true' (default, check from inside Docker) or 'false' (check from host)"
+    echo "Note: The script first checks if the service is running before attempting to wait for it."
+}
+
 
 # Function to check if a service is running
 is_service_running() {
@@ -11,11 +29,6 @@ is_service_running() {
     else
         return 1  # Service is not running
     fi
-}
-
-# Function to log messages with timestamp
-log_message() {
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1"
 }
 
 # Function to check if service is ready
@@ -59,15 +72,7 @@ check_service_ready() {
 
 # Main execution
 if [ $# -lt 2 ]; then
-    echo "Usage: $0 <SERVICE_NAME> <SERVICE_PORT> [MAX_ATTEMPTS] [INTERVAL] [CHECK_FROM_INSIDE]"
-    echo "Examples:"
-    echo " - $0 zookeeper 2181 15 5 true        # Wait for Zookeeper on internal port 2181"
-    echo " - $0 kafka 9092 15 5 true            # Wait for Kafka on internal port 9092"
-    echo " - $0 kafka 9092                      # Wait for Kafka on internal port 9092 with defaults"
-    echo " - $0 producer 9093 15 5 true         # Wait for producer on internal port 9093"
-    echo " - $0 kafka 29092 15 5 false          # Wait for Kafka on external port 29092 from host"
-    echo "CHECK_FROM_INSIDE can be 'true' (default, check from inside Docker) or 'false' (check from host)"
-    echo "Note: The script first checks if the service is running before attempting to wait for it."
+    show_usage
     exit 1
 fi
 
@@ -78,4 +83,14 @@ INTERVAL=${4:-5}
 CHECK_FROM_INSIDE=${5:-true}
 
 log_message "Waiting for $SERVICE_NAME on port $SERVICE_PORT to be ready... Checking from ${CHECK_FROM_INSIDE}side Docker network"
-check_service_ready "$SERVICE_NAME" "$SERVICE_PORT" "$MAX_ATTEMPTS" "$INTERVAL" "$CHECK_FROM_INSIDE"
+
+if !check_service_ready "$SERVICE_NAME" "$SERVICE_PORT" "$MAX_ATTEMPTS" "$INTERVAL" "$CHECK_FROM_INSIDE"; then
+    log_message "Failed to start $SERVICE_NAME"
+    exit 1
+fi
+if $SERVICE_NAME == "kafka"; then
+    if !scripts/kafka_is_operational; then 
+        log_message "Kafka is not operational"
+        exit 1
+    fi
+fi

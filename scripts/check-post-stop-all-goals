@@ -3,7 +3,7 @@ set -e
 
 source scripts/kafka-checks
 
-# returns exit code 0 for true if all goals are met, 1 otherwise
+# returns exit code 0 for true if all post-shuftown-goals have been  met, 1 otherwise
 goals_met=0
 if check_found_zero_kafka_services_running; 
     then goals_met=$((goals_met+1)); fi
@@ -14,10 +14,10 @@ if check_found_zero_non_empty_kafka_host_folders_to_backup;
 if check_found_zero_non_empty_kakfa_host_folders_to_delete;
     then goals_met=$((goals_met+1)); fi
 if [ $goals_met -eq 4 ]; then
-    echo "All goals met"
+    echo "All check-post-stop-all-goals met"
     exit 0
 else
-    echo "Not all goals met"
+    echo "Not all check-post-stop-all-goals met"
     exit 1
 fi
 

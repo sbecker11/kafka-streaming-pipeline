@@ -5,10 +5,10 @@ source scripts/logger
 # has log_message function
 source scripts/kafka-checks
 # has check functions:
-# check_no_services_running
-# check_no_volumes_exist
-# check_no_host_folders_for_backup
-# check_no_host_folders_for_deletion
+# check_found_zero_kafka_services_running
+# check_zero_volumes_exist
+# check_zero_host_folders_for_backup
+# check_zero_host_folders_for_deletion
 
 # Display help message
 show_help() {
@@ -29,11 +29,11 @@ backup_host_folders() {
     for dir in $(get_non_empty_host_folders); do
         log_message "${dir}"
         if [ -d "${dir}" ]; then
-            ifcheck_is_non_empty_dir "${dir}"; then
+            if check_is_non_empty_dir "${dir}"; then
                 srcParent="${dir%/*}"
                 srcChild="${dir##*/}"
                 # archival not needed if srcParent is empty
-                ifcheck_is_non_empty_dir "${srcParent}"; then
+                if check_is_non_empty_dir "${srcParent}"; then
                     backup_dir="/tmp/backup-$(date +%Y%m%d%H%M%S)"
                     mkdir -p $backup_dir
                     tarGzFile="${backup_dir}/${srcChild}.tar.gz"
@@ -127,14 +127,4 @@ for op in "${operations[@]}"; do
     esac
 done
 
-if check_no_services_running; then
-    log_message "All services have been shut down."
-    if check_no_volumes_exist; then
-        log_message "All Docker volumes have been removed."
-    else
-        log_message "Docker volumes still exist."
-    fi
-else
-    log_message "Failed to shut down all services."
-fi
-
+scripts/check-post-stop-all-goals

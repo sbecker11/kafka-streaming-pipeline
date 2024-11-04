@@ -1,0 +1,19 @@
+#!/bin/bash
+set -e
+
+source scripts/kafka-checks
+
+if [ "$#" -ne 1 ]; then
+    echo "Usage: $0 <dir>"
+    exit 1
+fi
+if [ ! -d $1 ]; then
+    # echo "Directory $1 does not exist"
+    exit 1
+fi
+if check_is_non_empty_dir $1; then
+    # echo "Directory $1 is non empty"
+    exit 0
+fi
+# echo "Directory $1 is empty"
+exit 1

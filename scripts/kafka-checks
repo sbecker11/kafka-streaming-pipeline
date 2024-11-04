@@ -1,103 +1,147 @@
-# source tnis file to get these functions:
-# is_non_empty_dir
-# check_no_services_running
-# check_no_volumes_exist
-# get_non_empty_host_folders
-# check_no_host_folders_for_backup
-# check_no_host_folders_for_deletion
-
+# source tnis file to get these NOISY CHECK FUNCTIONS 
+# that return 0 for true and 1 for false
+#
+# check_is_non_empty_dir
+# check_is_kafka_service
+# check_is_kafka_service_running
+# check_found_zero_kafka_services_running
+# check_found_zero_kafka_volumes
+# check_found_zero_non_empty_kafka_host_folders_to_backup
+# check_found_zero_non_empty_kakfa_host_folders_to_delete
 
 DOCKER_COMPOSE_FILE="docker/docker-compose.yml"
 
-is_non_empty_dir() {
-    local dir="$1"
-    # Check if the directory exists
-    if [ ! -d "$dir" ]; then
-        # echo "Directory does not exist."
+# returns true 0 if the directory exists and is not empty
+check_is_non_empty_dir() {
+    if [ $# -ne 1 ]; then
+        echo "Usage: $0 <dir>"
         return 1
     fi
-    # Check if the directory is not empty
-    if [ "$(find "$dir" -mindepth 1 -maxdepth 1 -print -quit)" ]; then
-        # echo "Directory is not empty."
-        # but does it have no children?
+    local dir="$1"
+    if [ -d "$dir" ]; then
         srcChild="${dir##*/}"
-        if [ -z ${srcChild} ]; then
+        if [ -n ${srcChild} ]; then
+            echo "Directory $dir exists and is non empty"
+            return 0
+        else
+            echo "Directory $dir exists and is empty"
             return 1
         fi
-        return 0
     else
-        # echo "Directory is empty."
+        echo "Directory $dir does not exist"
         return 1
     fi
 }
 
-# Function to check if services are still running
-check_no_services_running() {
-    if docker compose -f $DOCKER_COMPOSE_FILE ps -q | grep -q .; then
-        echo "Goal 1 (shut down services): Not Met"
+check_is_kafka_service() {
+    if [ $# -ne 1 ]; then
+        echo "Usage: $0 <service_name>"
+        return 1
+    fi
+    local service_name=$1
+    if ! echo "$(scripts/list-kafka-services)" | grep -i -q "$service_name"; then
+        echo "${service_name} is not a Kafka service"
         return 1
     else
-        echo "Goal 1 (shut down services): Met"
+        echo "${service_name} is a Kafka service"
         return 0
+    fi
+}   
+
+check_is_kafka_service_running() {
+        if [ $# -ne 1 ]; then
+        echo "Usage: $0 <service_name>"
+        return 1
+    fi
+    local service_name=$1
+    if ! echo "$(scripts/list-kafka-services)" | grep -q -i "$service_name"; then
+        echo "${service_name} is not a Kafka service"
+        return 1
+    fi
+    if echo "$(scripts/list-kafka-services-running)" | grep -q -i "$service_name"; then
+        echo "${service_name} is a Kafka service running"
+        return 0
+    else
+        echo "${service_name} is a Kafka service not running"
+        return 1
+    fi
+    if docker compose -f $DOCKER_COMPOSE_FILE ps -q $service_name | grep -q .; then
+        echo "${service_name} is running"
+        return 0
+    else
+        echo "${service_name} is not running"
+        return 1
     fi
 }
 
-# Function to check if volumes exist
-check_no_volumes_exist() {
+# Function to check if zero kafka services are running
+check_found_zero_kafka_services_running() {
+    if [ -z $(scripts/list-kafka-services-running) ]; then
+        echo "found zero kafka services running"
+        return 0
+    else
+        echo "found more than zero kafka services running"
+        return 1
+    fi
+}
+
+# Function to check if zero kafka volumes exist
+check_found_zero_kafka_volumes() {
     if [ -z $(scripts/list-kafka-volumes) ]; then
-        echo "Goal 2 (delete container volumes): Met"
+        echo "found zero kafka container volumes"
         return 0
     else
-        echo "Goal 2 (delete container volumes): Not Met"
+        echo "found more than zero  container volumes"
         return 1
     fi
 }
 
-get_non_empty_host_folders() {
-    local host_folders=""
-    host_folders+="/Users/sbecker11/workspace-fetch/kafka-streaming-pipeline/data/kafka/ "
-    host_folders+="/Users/sbecker11/workspace-fetch/kafka-streaming-pipeline/data/zookeeper/"
-    for dir in $host_folders; do
-        if is_non_empty_dir "$dir"; then
+# Function that echos space separated list of non-empty kafka host folders
+list_non_empty_kafka_host_folders() {
+    local kafka_host_folders=""
+    kafka_host_folders+="/Users/sbecker11/workspace-fetch/kafka-streaming-pipeline/data/kafka/ "
+    kafka_host_folders+="/Users/sbecker11/workspace-fetch/kafka-streaming-pipeline/data/zookeeper/"
+    for dir in $kafka_host_folders; do
+        if check_is_non_empty_dir "$dir"; then
             echo -e ${dir}
         fi
     done
 }
 
-# Function to check if non-empty host folders exist for backuop
-check_no_host_folders_need_backup() {
+# Function to check if zero non-empty kakfa host folders need backuop
+check_found_zero_non_empty_kafka_host_folders_to_backup() {
     local result=0
-    local folders=$(get_non_empty_host_folders)
+    local folders=$(list_non_empty_kafka_host_folders)
     for dir in "${folders[@]}"; do
         if [ -d "$dir" ]; then
             result=1
             break
         fi
     done
-    if [ $result -eq 1 ]; then
-        echo "Goal 3 (backup host folders): Not Met"
-        return 1
-    else
-        echo "Goal 3 (backup host folders): Met"
+    if [ $result -eq 0 ]; then
+        echo "found zero non-empty kafka host folders to backup"
         return 0
+    else
+        echo "found more than zero non-empty kafka host folders to backup"
+        return 1
     fi
 }
 
-# Function to check if any non-empty host folders exist for deletion
-check_no_host_folders_need_deletion() {
-    local folders=$(get_non_empty_host_folders)
+# Function to check if zero non-empty host folders need deletion
+check_found_zero_non_empty_kakfa_host_folders_to_delete() {
+    local folders=$(list_non_empty_kafka_host_folders)
     local result=0
     for dir in "${folders}"; do
         if [ -d "${dir}" ]; then
             result=1
         fi
     done
-    if [ $result -eq 1 ]; then
-        echo "Goal 4 (delete host folders): Not Met"
-        return 1
-    else
-        echo "Goal 4 (delete host folders): Met"
+    if [ $result -eq 0 ]; then
+        echo "found zero non-empty kafka host folders to delete"
         return 0
+    else
+        echo "found more than zero non-empty kafka host folders to delete"
+        return 1
     fi
 }
 

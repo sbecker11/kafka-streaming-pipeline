@@ -1,1 +1,13 @@
-docker compose -f docker/docker-compose.yml exec kafka /usr/bin/kafka-topics --bootstrap-server localhost:9092 --describe --topic user-login
+!#/bin/bash
+
+if [ "$#" -ne 1 ]; then
+    echo "Usage: $0 <topic>"
+    exit 1
+fi
+topic=$1
+if scripts/check-is-kafka-service-running kafka; then
+   docker compose -f docker/docker-compose.yml exec kafka /usr/bin/kafka-topics --bootstrap-server localhost:9092 --describe --topic $topic
+else
+    echo "Kafka service is not running. Cannot describe ${topic}"
+    exit 1
+fi

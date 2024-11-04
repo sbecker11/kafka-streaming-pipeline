@@ -5,7 +5,7 @@ ports=(
     "2181:Zookeeper"
     "9092:Kafka internal"
     "29092:Kafka external"
-    "9093:Python producer"
+    "9093:Producer"
 )
 
 # Function to check and display port status

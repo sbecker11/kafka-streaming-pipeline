@@ -1,1 +1,4 @@
+#!/bin/bash
+
+# echos a list of docker volumes that are associated with Kafka services
 docker volume ls -q | grep '^kafka_' | xargs -r docker volume inspect

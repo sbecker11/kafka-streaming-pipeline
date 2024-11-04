@@ -27,7 +27,7 @@ function test_kafka_operational_4() {
 
     # Create the topic if it doesn't exist
     log_message "Creating test topic $test_topic..."
-    if ! docker compose exec $kafka_container_name /usr/bin/kafka-topics --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic $test_topic; then
+    if ! scripts/kafka-exec $kafka_container_name /usr/bin/kafka-topics --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic $test_topic; then
         log_message "Test 4 Failed to create topic $test_topic."
         return 1
     fi
@@ -68,4 +68,10 @@ function test_kafka_operational() {
     return 1
 }
 
-test_kafka_operational
+if test_kafka_operational; then
+    log_message "Kafka is operational."
+    exit 0
+else
+    log_message "Kafka is not operational."
+    exit 1
+fi

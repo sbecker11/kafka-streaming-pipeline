@@ -29,11 +29,11 @@ backup_host_folders() {
     for dir in $(get_non_empty_host_folders); do
         log_message "${dir}"
         if [ -d "${dir}" ]; then
-            if is_non_empty_dir "${dir}"; then
+            ifcheck_is_non_empty_dir "${dir}"; then
                 srcParent="${dir%/*}"
                 srcChild="${dir##*/}"
                 # archival not needed if srcParent is empty
-                if is_non_empty_dir "${srcParent}"; then
+                ifcheck_is_non_empty_dir "${srcParent}"; then
                     backup_dir="/tmp/backup-$(date +%Y%m%d%H%M%S)"
                     mkdir -p $backup_dir
                     tarGzFile="${backup_dir}/${srcChild}.tar.gz"

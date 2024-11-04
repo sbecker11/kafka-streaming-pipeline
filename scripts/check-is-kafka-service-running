@@ -1,0 +1,13 @@
+#!/bin/bash
+set -e
+
+source scripts/kafka-checks
+
+if [ "$#" -ne 1 ]; then
+    echo "Usage: $0 <service>"
+    exit 1
+fi
+if check_is_kafka_service_running $1 ; then
+    exit 0
+fi
+exit 1

@@ -1,14 +1,14 @@
 #!/bin/bash
 
 # Common docker compose command prefix
-COMPOSE_BASE="docker compose -f docker/docker-compose.yml -f docker/docker-compose.kafka.yml"
+COMPOSE_BASE="docker compose -f docker/docker-compose.yml"
 
 echo "Kafka Pipeline Commands Reference"
 echo "================================="
 echo
 echo "1. Start Services (detached mode):"
 echo "   - Starts Kafka, Zookeeper, and related services in detached mode."
-echo "$COMPOSE_BASE up -d"
+echo eval "$COMPOSE_BASE up -d"
 echo
 echo "2. Stop Services:"
 echo "   - Stops all running services defined in the Docker Compose files."

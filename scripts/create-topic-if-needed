@@ -1,22 +1,5 @@
 #!/bin/sh
  set -e
 
-existing_topics=$(docker compose -f docker/docker-compose.yml exec kafka /usr/bin/kafka-topics --bootstrap-server localhost:9092 --list)
-if echo $existing_topics | grep -q user-login; then
-  echo "Topic 'user-login' already exists"
-  exit 0
-fi
 
-# Wait for Kafka to be ready
-scripts/wait-for-service kafka 9092
-if [ $? -ne 0 ]; then
-  echo "Failed to start Kafka"
-  exit 1
-fi
 
-# Create topics
-scripts/kafka-exec /usr/bin/kafka-topics --bootstrap-server localhost:9092 --create --topic user-login --replication-factor 1 --partitions 1
-scripts/list-topics
-
-# this requires the kafka container to be running
-# docker compose -f docker/docker-compose.yml exec kafka /usr/bin/kafka-topics --bootstrap-server localhost:9092 --create --topic user-login  --partitions 1 --replication-factor 1

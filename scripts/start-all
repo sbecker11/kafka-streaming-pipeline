@@ -16,6 +16,9 @@ else
   log_message "Zookeeper is running"
 fi
 
+
+log_message "Starting Kafka attached... "
+
 total_seconds_waited=0
 RETRY_SECONDS=10 # number of seconds to wait before retrying
 MAX_ATTEMPTS=5 # Number of attempts to check if Kafka is ready
@@ -30,32 +33,37 @@ while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
         log_message "DANGER: removing ${metadata_file} for second attempt"
         rm ${metadata_file}
     else
-        log_message "No metadata file found"
+        log_message "${metadata_file} not found"
     fi
   fi
+
+  # detached="-d"
+  detached=""
   
   # Here's start kafka attempt # $ATTEMPT
   log_message "Starting kafka detached attempt: ${ATTEMPT}... "
-  if ! docker compose -f docker/docker-compose.yml up -d kafka; then
-    log_message "Kafka Failed to start or become availableKafka on attempt $ATTEMPT"
+  if ! docker compose -f docker/docker-compose.yml up #{detached} kafka; then
+    log_message "Kafka Failed to start or become availableKafka on attempt ${ATTEMPT}"
   else
-    log_message "Kafka container started on attempt $ATTEMPT, now checking if Kafka is operational..."
+    log_message "Kafka container started on attempt ${ATTEMPT}, now checking if Kafka is operational..."
 
     # Check if Kafka is operational
     if scripts/kafka_is_operational; then
       log_message "Kafka is operational."
       break
     else
-      log_message "Kafka is not operational yet."
+      log_message "Kafka is not operational yet. "
     fi  
   fi
   
-  let ATTEMPT++
+  ATTEMPT=$((ATTEMPT + 1))
   if [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
-    log_message "Kafka failed to start, retrying in ${RETRY_SECONDS} seconds..."
+    log_message "Kafka failed to start on attempt:${ATTEMPT}, retrying in ${RETRY_SECONDS} seconds..."
     sleep ${RETRY_SECONDS}
     total_seconds_waited=$((total_seconds_waited + RETRY_SECONDS))
   fi
+
+  # return to the top of the loop
 done
 
 # Wait for Kafka to be fully up and running
@@ -67,14 +75,39 @@ else
   exit 1
 fi
 
-# create a topic if it doesn't exist
-./scripts/create-topic-if-needed
+topic="user-login"
+
+existing_topics=$(docker compose -f docker/docker-compose.yml exec kafka /usr/bin/kafka-topics --bootstrap-server localhost:9092 --list)
+if echo $existing_topics | grep -q ${topic}; then
+  echo "Topic ${topic} already exists"
+else
+  echo "Creating topic ${topic}"
+  docker compose -f docker/docker-compose.yml exec kafka /usr/bin/kafka-topics --bootstrap-server localhost:9092 --create --topic ${topic} --replication-factor 1 --partitions 1
+
+  existing_topics=$(docker compose -f docker/docker-compose.yml exec kafka /usr/bin/kafka-topics --bootstrap-server localhost:9092 --list)
+  if echo $existing_topics | grep -q ${topic}; then
+    echo "Topic ${topic} created successfully"
+  else
+    echo "Failed to create topic ${topic}"
+    exit 1
+fi
 
 # echo "Starting producer detached... "
-# docker compose -f docker/docker-compose.yml up -d producer
+docker compose -f docker/docker-compose.yml up -d producer
+
 
 # # Wait for producer to be fully up and running
 # ./scripts/healthcheck_producer
 
 # List all containers
 docker ps -a
+
+
+# # start the consumer
+# scripts/kafka-exec kafka /usr/bin/kafka-console-consumer \
+#   --bootstrap-server localhost:9092 \
+#   --topic ${topic} \
+#   --from-beginning \
+#   --property print.key=true \
+#   --property key.deserializer=org.apache.kafka.common.serialization.StringDeserializer \
+#   --property value.deserializer=org.apache.kafka.common.serialization.StringDeserializer

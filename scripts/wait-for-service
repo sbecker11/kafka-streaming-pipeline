@@ -21,7 +21,7 @@ show_usage() {
 }
 
 
-# Function to check if a service is running
+# local Function to check if a service is running
 is_service_running() {
     local SERVICE_NAME=$1
     if docker compose -f docker/docker-compose.yml ps -q $SERVICE_NAME | grep -q .; then
@@ -31,7 +31,17 @@ is_service_running() {
     fi
 }
 
-# Function to check if service is ready
+# Service life-cycle is as follows:
+# 1. Service is started
+# 2. Service is running
+# 3. Service is ready
+# 4. Service is operational (for kafka service only)
+
+# Local function makes as many as max failed attempts to check if a service is ready
+# returns success 0 if service is ready befpre max failed attempts
+# otherwise return failure 1 if not ready after max failed attempts
+# The service is not initially running then the function immediately return 1
+# If required parameters are not provicded, the function shows usage and returns 1
 check_service_ready() {
     local SERVICE_NAME=$1
     local SERVICE_PORT=$2
@@ -42,33 +52,54 @@ check_service_ready() {
 
     if ! is_service_running $SERVICE_NAME; then
         log_message "Service \"$SERVICE_NAME\" is not running"
-        exit 1
+        return 1
     fi
 
+    # the attempt-loop
     while [ $attempt -lt $max_attempts ]; do
         if [ "$check_from_inside" = "true" ]; then
-            # Check from inside Docker network
+
+            # internal check for srevice is "aviaable"
             if docker compose -f docker/docker-compose.yml exec $SERVICE_NAME /bin/bash -c "nc -z $SERVICE_NAME $SERVICE_PORT"; then
-                log_message "$SERVICE_NAME is ready (checked internally)"
-                return 0
+                log_message "$SERVICE_NAME service is ready (checked internally)"
+
+                 # Special kafka check for kafka service is operationia
+                if $SERVICE_NAME == "kafka"; then
+                    if scripts/kafka_is_operational; then 
+                        log_message "kafka service is ready and operational"
+                        return 0
+                    fi
+                else
+                    # other service is ready
+                    return 0
+                fi
             fi
         else
-            # Check from outside Docker network
+            # external check for srevice is "aviaable"
             if nc -z $(docker compose -f docker/docker-compose.yml port $SERVICE_NAME $SERVICE_PORT | cut -d: -f2) $SERVICE_PORT; then
-                log_message "$SERVICE_NAME is ready (checked externally)"
+                log_message "$SERVICE_NAME service is ready (checked externally)"
+                if $SERVICE_NAME == "kafka"; then
+                    log_message "no external check for is kafka operational"
+                else
+                    log_message "non-kafka service is ready"
+                    return 0
+                fi
                 return 0
             fi
         fi
 
-        log_message "$SERVICE_NAME not ready yet. Attempt $((attempt+1)) of $max_attempts"
+
+        log_message "$SERVICE_NAME service not ready yet. Attempt $((attempt+1)) of $max_attempts"
         sleep $interval
         ((attempt++))
-    done
-    log_message "$SERVICE_NAME failed to start or become available within timeout"
-    exit 1
-}
 
-# ... (rest of the script remains similar)
+    # end of the attempt-loop
+    done
+
+    log_message "$SERVICE_NAME service failed to start or become available after"
+    log_message "${$max_attempts} attempts each with a ${interval} sec sleep interval"
+    return 1
+}
 
 # Main execution
 if [ $# -lt 2 ]; then
@@ -87,10 +118,8 @@ log_message "Waiting for $SERVICE_NAME on port $SERVICE_PORT to be ready... Chec
 if !check_service_ready "$SERVICE_NAME" "$SERVICE_PORT" "$MAX_ATTEMPTS" "$INTERVAL" "$CHECK_FROM_INSIDE"; then
     log_message "Failed to start $SERVICE_NAME"
     exit 1
+else
+    log_message "$SERVICE_NAME is running and ready"
+    exit 0
 fi
-if $SERVICE_NAME == "kafka"; then
-    if !scripts/kafka_is_operational; then 
-        log_message "Kafka is not operational"
-        exit 1
-    fi
-fi
+    

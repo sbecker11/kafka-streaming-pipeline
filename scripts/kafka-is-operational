@@ -68,6 +68,7 @@ function test_kafka_operational() {
     return 1
 }
 
+# Main execution
 if test_kafka_operational; then
     log_message "Kafka is operational."
     exit 0

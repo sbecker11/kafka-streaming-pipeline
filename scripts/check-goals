@@ -7,7 +7,7 @@ source scripts/kafka-checks
 goals_met=0
 if check_found_zero_kafka_services_running; 
     then goals_met=$((goals_met+1)); fi
-if check_found_zero_kafka_volumes; 
+if check_found_zero_kafka_container_volumes; 
     then goals_met=$((goals_met+1)); fi
 if check_found_zero_non_empty_kafka_host_folders_to_backup; 
     then goals_met=$((goals_met+1)); fi

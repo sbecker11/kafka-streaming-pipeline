@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # source tnis file to get these NOISY CHECK FUNCTIONS 
 # that return 0 for true and 1 for false
 #
@@ -5,7 +7,7 @@
 # check_is_kafka_service
 # check_is_kafka_service_running
 # check_found_zero_kafka_services_running
-# check_found_zero_kafka_volumes
+# check_found_zero_kafka_container_volumes
 # check_found_zero_non_empty_kafka_host_folders_to_backup
 # check_found_zero_non_empty_kakfa_host_folders_to_delete
 
@@ -86,7 +88,7 @@ check_found_zero_kafka_services_running() {
 }
 
 # Function to check if zero kafka volumes exist
-check_found_zero_kafka_volumes() {
+check_found_zero_kafka_container_volumes() {
     if [ -z $(scripts/list-kafka-volumes) ]; then
         echo "found zero kafka container volumes"
         return 0
@@ -145,3 +147,51 @@ check_found_zero_non_empty_kakfa_host_folders_to_delete() {
     fi
 }
 
+# This condition checks if the script is being sourced or run directly
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  # test_functions
+    num_passed=0
+    num_failed=0
+
+    ## TEST check_is_non_empty_dir ####################
+    if check_is_non_empty_dir '/tmp' > /dev/null; then
+        echo "expected true - /tmp is a non_empty_dir"
+        num_passed=$((num_passed+1))
+    else
+        num_failed=$((num_failed+1))
+    fi
+
+    rm -rf /tmp/boo
+    touch /tmp/boo
+
+    if ! check_is_non_empty_dir '/tmp/boo' > /dev/null; then
+        echo "expected false - '/tmp/boo' is not a non-empty-dir"
+        num_passed=$((num_passed+1))
+    else
+        num_failed=$((num_failed+1))
+    fi
+
+    ## TEST check_is_kafka_service running ####################
+
+    bash scripts/start-all
+
+    ## when this script returns both zookeeper and kafka should be running
+
+    if check_is_kafka_service_running 'zookeeper'; then
+        echo "expected true - 'zookeeper' is a kafka service running"
+        num_passed=$((num_passed+1))
+    else
+        num_failed=$((num_failed+1))
+    fi
+
+    if check_is_kafka_service_running 'kafka'; then
+        echo "expected true - 'kafka' is a kafka service running"
+        num_passed=$((num_passed+1))
+    else
+        num_failed=$((num_failed+1))
+    fi
+
+    echo "num_passed: $num_passed"
+    echo "num_failed: $num_failed"
+
+fi
